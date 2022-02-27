@@ -24,6 +24,7 @@ async function gitPull(local_repo, res) {
 }
 
 app.post('/github-notification', (req, res, next) => {
+    
     //TODO: trocar para variavel de ambiente
     const hmac = crypto.createHmac('sha256', 'RFy6kGY6_q@@XSU')
     hmac.update(JSON.stringify(req.body))
@@ -32,6 +33,8 @@ app.post('/github-notification', (req, res, next) => {
     if (req.get('X-Hub-Signature-256')) {
       if ( `sha256=${hmac.digest('hex').toString()}` === req.get('X-Hub-Signature-256') ){
         gitPull(local_repo, res)        
+        console.log("github-notification aparentilly sucessfull")
+        return
       } else {
         console.error("signature header received but hash did not match")
         res.status(403).send('Signature is missing or does not match')
@@ -40,11 +43,13 @@ app.post('/github-notification', (req, res, next) => {
       console.error('Signature missing')
       res.status(403).send('Signature is missing or does not match')
     }
+    console.log("github-notification error")
 })
 
 // everything else should 404
 app.use(function (req, res) {
   res.status(404).send("There's nothing here")
+  console.log("not found")
 })
 
 app.listen(port, () => {
