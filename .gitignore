@@ -11,3 +11,6 @@ instance/*
 
 ### VS_CODE ###
 .vs_code
+
+### node ###
+**/node_modules
