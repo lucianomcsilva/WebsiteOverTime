@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500&display=swap" rel="stylesheet">
+        <link href="/static/styles.css" rel="stylesheet">
+        <title>Birthdays</title>
+    </head>
+    <body>
+        {% if get_flashed_messages() %}
+            <div class="alert">
+                <h3>{{ get_flashed_messages() | join(" ") }}</h3>
+            </div>
+        {% endif %}
+        <div class="jumbotron">
+            <h1>Birthdays</h1>
+        </div>
+
+
+        <div class="container">
+            <div class="section">
+
+                <h2>Add a Birthday</h2>
+                <!-- TODO: Create a form for users to submit a name, a month, and a day -->
+                <form action="/" method="post">
+                    <div class="form-group">
+                        <input autocomplete="off" autofocus="" class="form-control" name="name" placeholder="Name" type="text">
+                        <input autocomplete="off" autofocus="" class="form-control" name="month" placeholder="Month" type="text">
+                        <input autocomplete="off" autofocus="" class="form-control" name="day" placeholder="Day" type="text">
+                        <button class="btn btn-primary" type="submit">Add</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="section">
+
+                <h2>All Birthdays</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Birthday</th>
+                            <th>Delete</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- TODO: Loop through the database entries to display them in this table -->
+                        {% for person in birthdays %}
+                        <tr>
+                            <td>{{person['name']}}</td>
+                            <td>{{person['month']}}/{{person['day']}}</td>
+                            <td>
+                                <form id="form_{{person['id']}}" action='/' method="post">
+                                    <input type="hidden" name="id" value="{{person['id']}}">
+                                    <div class="delete_image" onClick="form_{{person['id']}}.submit()"> </div>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </body>
+    <p class='attribution'>icon on this website are provided by <a href="https://icons8.com/">icons8</a> as Creative Commons Attribution-NoDerivs 3.0.</p>
+</html>
