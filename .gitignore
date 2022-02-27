@@ -1,0 +1,13 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+### Flask ###
+instance/*
+!instance/.gitignore
+.webassets-cache
+.env
+
+
+### VS_CODE ###
+.vs_code
