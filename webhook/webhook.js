@@ -26,7 +26,7 @@ async function gitPull(local_repo, res) {
   }
 }
 async function compile(){
-    const { stdout, stderr } = await exec(`pip install -r requirements.txt`);
+    const { stdout, stderr } = await exec(`sudo pip install -r requirements.txt`);
     let msg = stderr ? stderr : stdout // message is the error message if there is one, else the stdout
     return msg
 }
