@@ -16,14 +16,20 @@ async function gitPull(local_repo, res) {
   try {
     const { stdout, stderr } = await exec(`cd ${local_repo} && git pull`);
     let msg = stderr ? stderr : stdout // message is the error message if there is one, else the stdout
-    // do something with message
+    compile()
+    // do something with message    
+
     res.status(200).send('Ok')
   } catch (err) {
     console.error(err)
     res.status(500).send('server error sorry about that')
   }
 }
-
+async function compile(){
+    const { stdout, stderr } = await exec(`pip install -r requirements.txt`);
+    let msg = stderr ? stderr : stdout // message is the error message if there is one, else the stdout
+    return msg
+}
 app.post('/github-notification', (req, res, next) => {
     
     //TODO: trocar para variavel de ambiente
@@ -33,7 +39,7 @@ app.post('/github-notification', (req, res, next) => {
     // check has signature header and the decrypted signature matches
     if (req.get('X-Hub-Signature-256')) {
       if ( `sha256=${hmac.digest('hex').toString()}` === req.get('X-Hub-Signature-256') ){
-        gitPull(local_repo, res)        
+        gitPull(local_repo, res)          
         console.log("github-notification aparentilly sucessfull")
         return
       } else {
