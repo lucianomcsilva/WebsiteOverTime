@@ -15,6 +15,7 @@ const exec = util.promisify(require('child_process').exec) // run child_process.
 async function gitPull(local_repo, res) {
   try {
     const { stdout, stderr } = await exec(`cd ${local_repo} && git pull`);
+    const { stdout2, stderr2 } = await exec(`cd ${local_repo} && sudo pip install -r requirements.txt`);
     let msg = stderr ? stderr : stdout // message is the error message if there is one, else the stdout
     await compile()
     // do something with message    
@@ -25,11 +26,7 @@ async function gitPull(local_repo, res) {
     res.status(500).send('server error sorry about that')
   }
 }
-async function compile(){
-    const { stdout, stderr } = await exec(`cd ${local_repo} && sudo pip install -r requirements.txt`);
-    let msg = stderr ? stderr : stdout // message is the error message if there is one, else the stdout
-    return msg
-}
+
 app.post('/github-notification', (req, res, next) => {
     
     //TODO: trocar para variavel de ambiente
