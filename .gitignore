@@ -14,3 +14,6 @@ instance/*
 
 ### node ###
 **/node_modules
+
+### Custom ###
+**/screenshots

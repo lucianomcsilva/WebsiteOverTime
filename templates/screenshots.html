@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block main %}
+<style>
+.wsot_img {
+    border:1px solid red; 
+    
+    max-width: 100%;
+    display: inline;
+}
+.col {
+    border:1px solid green;
+}
+#logo {
+    text-align:center;
+    margin-top:0em;
+    padding:10px;
+}
+</style>
+<hr style="margin:1em">
+<div class="container" style="text-align: center;">
+    <!-- div class='container rounded' style="border:1px solid gray" -->
+    {% for (i, year, image) in screenshots %}
+        {% if loop.index0 % 3 == 0 %}
+        <div class="row align-items-start">
+        {% endif %}
+            <div class='col-md'>
+                <h2> {{year}} </h2>
+                <!-- <img class="rounded wsot_img" src="/screenshots/www.apple.com/www.apple.com_2000.png"> -->
+                <img class="rounded wsot_img" src="screenshots/www.apple.com/{{image}}">                
+            </div>
+        {% if loop.index0 % 3 == 2 or loop.last %}
+        </div>
+        {% endif %}    
+    {% endfor %}                
+</div>
+{% endblock %}

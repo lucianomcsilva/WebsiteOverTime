@@ -1,9 +1,56 @@
+
 import os
 
 from cs50 import SQL
 from flask import Flask, flash, jsonify, redirect, render_template, request, session
 from flask_session import Session
 from tempfile import mkdtemp
+
+
+import sys
+import re
+import os
+from urllib.parse import urlparse
+from selenium import webdriver
+from time import sleep
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    BLINK = '\033[5m'
+
+#url = 'https://www.apple.com/'
+
+def create_dir(domain):
+    base = 'screenshots'
+    if not os.path.exists(base):
+        os.mkdir(base)
+    path = f'{base}/{domain}'
+    if not os.path.exists(path):
+        os.mkdir(path)
+    else:
+        i = 2
+        while os.path.exists(path):
+            path = domain + f" ({i})"
+            if not os.path.exists(path):
+                os.mkdir(path)
+                break
+            i += 1
+    return path
+
+def getFinalUrl(initialURL):
+    import requests
+    #url = "https://web.archive.org/web/20080101/http://www.microsoft.com/"
+    res = requests.get(initialURL)
+    return res.request.url
+
 
 # Configure application
 app = Flask(__name__)
@@ -17,50 +64,71 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-
-# Configure CS50 Library to use SQLite database
-db = SQL("sqlite:///birthdays.db")
-
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
-
-        # TODO: Add the user's entry into the database
-        # Check if ID comes in the form. If doesn`t, it is a insert
-        id = request.form.get('id', type=int)
-        if not id:
-            name = request.form.get('name').strip()
-            month = request.form.get('month', type=int)
-            day = request.form.get('day', type=int)
-            if not name or not month or not day:
-                flash("You must provide information to insert")
-                return redirect("/")
-            elif month > 12:
-                flash("Invalid Month")
-                return redirect("/")
-            elif  (month in [1,3,5,7,8,10,12] and day > 31) or (month in [4,6,9,11] and day > 30) or (month == 2 and day > 29):
-                flash("Invalid Day")
-                return redirect("/")
-
-            db.execute("INSERT INTO birthdays (name, month, day) VALUES (?,?,?)", name, month, day)
-            flash(f"Inserted {name}'s birthday at {month}/{day}")
-            return redirect("/")
-        else:
-            #must be the delete
-            person = db.execute("SELECT * FROM birthdays WHERE id = ?", id)
-            name = person[0]['name']
-            month = person[0]['month']
-            day = person[0]['day']
-            db.execute("DELETE FROM birthdays WHERE id = ?", id)
-            flash(f"Deleted {name}'s birthday at {month}/{day}")
-            return redirect("/")
-
+        url = "http://"+request.form.get('url').strip()
+        get_url(url)
+        #TODO sanatize the string
+        return redirect(f"/{url}")
     else:
+        #cache = ['www.uol.com.br', 'www.terra.com.br', 'www.ig.com.br', 'www.globo.com']
+        cache = [ f.name for f in os.scandir('./screenshots/') if f.is_dir() ]
+        return render_template("home.html", cache=cache)
+    #return "nada ainda...aguarde"
+    
+@app.route("/<domain>", methods=["GET", "POST"])
+def get_domain(domain):
+    print(domain)
+    if('favicon' in domain):
+        return "nothing for you here"
+    url = f"http://{domain}"
+    print(f"looking dor domain at ./screenshots/{domain}/")
+    screenshots = [(index, f.name[-8:-4], f.name) for (index, f) in enumerate(os.scandir(f'./screenshots/{domain}/'))]
+    cache = [ f.name for f in os.scandir('./screenshots/') if f.is_dir() ]
+    #screenshots = [ (f.name[-8:-4], f.name) for f in os.scandir(f'./screenshots/{domain}/') ]
+    
+    return render_template("screenshots.html", screenshots=screenshots, cache=cache)
+    return url
 
-        # TODO: Display the entries in the database on index.html
-        birthdays = db.execute('SELECT * FROM birthdays')
-        return render_template("index.html", birthdays=birthdays)
 
+def get_url(url):
+    print(f"Requested screenshot for {bcolors.OKCYAN}{url}{bcolors.ENDC}")
+    
+    domain = urlparse(url).netloc
+    print(f"Domain for this request is {bcolors.OKCYAN}{domain}{bcolors.ENDC}")
+    
+    DRIVER = 'chromedriver'
+    options = webdriver.ChromeOptions()
+    options.headless = True
+    options.add_argument("--hide-scrollbars")
 
+    driver = webdriver.Chrome(options=options)
+    driver.set_window_size(1920, 1080)
+    driver.set_window_size(800, 600)
+    path = create_dir(domain)
+    for year in range(2000, 2021):
+        print(f"{bcolors.BOLD}{bcolors.OKGREEN}------------------  {bcolors.BLINK}{year}  ------------------{bcolors.ENDC}")
+        aURL = f'https://web.archive.org/web/{year}0101/{url}'        
+        print(f"Trying {bcolors.OKCYAN}{aURL}{bcolors.ENDC}")
+
+        finalUrl = getFinalUrl(aURL)    
+        print(f"best webarchive url found at  {bcolors.OKCYAN}{finalUrl}{bcolors.ENDC}")
+
+        driver.get(aURL)
+        driver.get_screenshot_as_file(f"{path}/{domain}_{year}.png")
+        print(f"File saved at {bcolors.OKCYAN}{path}/{domain}_{year}.png{bcolors.ENDC}")
+
+    driver.quit()
+
+# orquestrate de program
+def main():
+    # Ensure correct usage
+    if len(sys.argv) != 2:
+        sys.exit("Usage: python3 screenshots.py http://www.example.com")
+    url = sys.argv[1]
+    get_url(url)    
+
+# call the program in a safe way
 if __name__ == '__main__':
-      app.run(host='0.0.0.0', port=5000)
+      app.run(host='0.0.0.0', port=5001)
