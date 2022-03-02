@@ -88,7 +88,7 @@ def get_domain(domain):
     cache = [ f.name for f in os.scandir('./screenshots/') if f.is_dir() ]
     #screenshots = [ (f.name[-8:-4], f.name) for f in os.scandir(f'./screenshots/{domain}/') ]
     
-    return render_template("screenshots.html", screenshots=screenshots, cache=cache)
+    return render_template("screenshots.html", screenshots=screenshots, cache=cache, domain=domain)
     return url
 
 
