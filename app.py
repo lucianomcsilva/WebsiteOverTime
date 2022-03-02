@@ -83,8 +83,9 @@ def get_domain(domain):
     if('favicon' in domain):
         return "nothing for you here"
     url = f"http://{domain}"
-    print(f"looking dor domain at ./screenshots/{domain}/")
-    screenshots = [(index, f.name[-8:-4], f.name) for (index, f) in enumerate(os.scandir(f'./screenshots/{domain}/'))]
+    print(f"looking dor domain at ./screenshots/{domain}/")    
+    #screenshots = [(index, f.name[-8:-4], f.name) for (index, f) in enumerate(os.scandir(f'./screenshots/{domain}/'))]
+    screenshots = [(index, int(tup[0]), tup[1]) for (index, tup) in enumerate(sorted([(f.name[-8:-4], f.name) for f in os.scandir(f'./screenshots/{domain}/')]))]
     cache = [ f.name for f in os.scandir('./screenshots/') if f.is_dir() ]
     #screenshots = [ (f.name[-8:-4], f.name) for f in os.scandir(f'./screenshots/{domain}/') ]
     
