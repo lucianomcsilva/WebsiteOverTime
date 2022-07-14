@@ -1,10 +1,10 @@
-
+import asyncio
 import sys
 import re
 import os
 from urllib.parse import urlparse
 from selenium import webdriver
-from time import sleep
+import time 
 import boto3
 import shutil
 
@@ -24,6 +24,14 @@ class bcolors:
 
 sqs = boto3.resource("sqs")
 sqs_queue = sqs.get_queue_by_name(QueueName="websiteovertime-geturl.fifo")
+
+
+
+def background(f):
+    def wrapped(*args, **kwargs):
+        return asyncio.get_event_loop().run_in_executor(None, f, *args, **kwargs)
+
+    return wrapped
 
 
 # This methdod create a new directory in case 
@@ -63,7 +71,11 @@ def getFinalUrl(initialURL):
 
 # Invoke selenium and chrome and save the screenshot for each file. Atempt to
 # make if more performatic and run in paralel with asyncio
-def get_url_at_year(path, url, year):
+# Note: IT did not work in a cheap machine. LEt it run assincronous
+# @background
+def get_url_at_year(path, domain, year):
+    url = f"http://{domain}"
+
     DRIVER = 'chromedriver'
     options = webdriver.ChromeOptions()
     options.headless = True
@@ -73,18 +85,22 @@ def get_url_at_year(path, url, year):
     driver.set_window_size(1920, 1080)
     driver.set_window_size(800, 600)    
 
+    
+    aURL = f'https://web.archive.org/web/{year}0101/{url}'
     print(f"{bcolors.BOLD}{bcolors.OKGREEN}------------------  {bcolors.BLINK}{year}  ------------------{bcolors.ENDC}")
-    aURL = f'https://web.archive.org/web/{year}0101/{url}'        
     print(f"Trying {bcolors.OKCYAN}{aURL}{bcolors.ENDC}")
 
     finalUrl = getFinalUrl(aURL)    
+    print(f"{bcolors.BOLD}{bcolors.OKGREEN}------------------  {bcolors.BLINK}{year}  ------------------{bcolors.ENDC}")
     print(f"best webarchive url found at  {bcolors.OKCYAN}{finalUrl}{bcolors.ENDC}")
 
     driver.get(aURL)
     driver.get_screenshot_as_file(f"{path}/{domain}_{year}.png")
+    print(f"{bcolors.BOLD}{bcolors.OKGREEN}------------------  {bcolors.BLINK}{year}  ------------------{bcolors.ENDC}")
     print(f"File saved at {bcolors.OKCYAN}{path}/{domain}_{year}.png{bcolors.ENDC}")
 
-    driver.quit()
+    #driver.quit()
+    return 
 
 # Invoke selenium and chrome and save the screenshot for each file
 def get_url(url):
@@ -94,30 +110,32 @@ def get_url(url):
     print(f"Domain for this request is {bcolors.OKCYAN}{domain}{bcolors.ENDC}")
     path = create_dir(domain)
 
-    
-    DRIVER = 'chromedriver'
-    options = webdriver.ChromeOptions()
-    options.headless = True
-    options.add_argument("--hide-scrollbars")
-    
-    driver = webdriver.Chrome(options=options)
-    driver.set_window_size(1920, 1080)
-    driver.set_window_size(800, 600)
-    
-    
     for year in range(2000, 2022):
-        print(f"{bcolors.BOLD}{bcolors.OKGREEN}------------------  {bcolors.BLINK}{year}  ------------------{bcolors.ENDC}")
-        aURL = f'https://web.archive.org/web/{year}0101/{url}'        
-        print(f"Trying {bcolors.OKCYAN}{aURL}{bcolors.ENDC}")
+        get_url_at_year(path, domain, year)
+    
+    # DRIVER = 'chromedriver'
+    # options = webdriver.ChromeOptions()
+    # options.headless = True
+    # options.add_argument("--hide-scrollbars")
+    
+    # driver = webdriver.Chrome(options=options)
+    # driver.set_window_size(1920, 1080)
+    # driver.set_window_size(800, 600)
+    
+    
+    # for year in range(2000, 2022):        
+    #     print(f"{bcolors.BOLD}{bcolors.OKGREEN}------------------  {bcolors.BLINK}{year}  ------------------{bcolors.ENDC}")
+    #     aURL = f'https://web.archive.org/web/{year}0101/{url}'        
+    #     print(f"Trying {bcolors.OKCYAN}{aURL}{bcolors.ENDC}")
 
-        finalUrl = getFinalUrl(aURL)    
-        print(f"best webarchive url found at  {bcolors.OKCYAN}{finalUrl}{bcolors.ENDC}")
+    #     finalUrl = getFinalUrl(aURL)    
+    #     print(f"best webarchive url found at  {bcolors.OKCYAN}{finalUrl}{bcolors.ENDC}")
 
-        driver.get(aURL)
-        driver.get_screenshot_as_file(f"{path}/{domain}_{year}.png")
-        print(f"File saved at {bcolors.OKCYAN}{path}/{domain}_{year}.png{bcolors.ENDC}")
+    #     driver.get(aURL)
+    #     driver.get_screenshot_as_file(f"{path}/{domain}_{year}.png")
+    #     print(f"File saved at {bcolors.OKCYAN}{path}/{domain}_{year}.png{bcolors.ENDC}")
 
-    driver.quit()
+    # driver.quit()
     pass
 
 def process_message(message_body):
@@ -132,9 +150,6 @@ if __name__ == "__main__":
         #     print("-----------------------------")
         for message in messages:
             message_ts = message.attributes     
-            get_url(message.body)
             process_message(f"{message_ts} {message.message_id} {message.body}")
             message.delete()
-            #wait one second to create the dir
-            sleep(1)
-            
+            get_url(message.body)            
