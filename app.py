@@ -13,6 +13,14 @@ import os
 from urllib.parse import urlparse
 from selenium import webdriver
 from time import sleep
+import datetime;
+import uuid
+
+
+import boto3
+
+sqs = boto3.resource("sqs")
+#sqs_queue = sqs.get_queue_by_name(QueueName="websiteovertime-geturl.fifo")
 
 class bcolors:
     HEADER = '\033[95m'
@@ -68,9 +76,36 @@ Session(app)
 def index():
     if request.method == "POST":
         url = "http://"+request.form.get('url').strip()
-        get_url(url)
+
+        ct = datetime.datetime.now()
+
+        # Send message to SQS queue   
+        sqs_queue = sqs.get_queue_by_name(QueueName="websiteovertime-geturl.fifo")     
+
+        response = sqs_queue.send_message(            
+            MessageGroupId="WebSiteOverTime",
+            #for test purpose. In the future change for URL
+            MessageDeduplicationId=f'{uuid.uuid4()}',
+            MessageAttributes={
+                'Title': {
+                    'DataType': 'String',
+                    'StringValue': 'Request new URL'
+                },
+                'IPValue': {
+                    'DataType': 'String',
+                    'StringValue': request.remote_addr
+                },
+                'RequestDate': {
+                    'DataType': 'String',
+                    'StringValue': f'{ct}'
+                }
+            },
+            MessageBody=(url)
+        )
+        print(f"messa {response['MessageId']} sent")
+        #get_url(url)
         #TODO sanatize the string
-        return redirect(f"/{url}")
+        return redirect(f"/{url[7:]}")
     else:
         #cache = ['www.uol.com.br', 'www.terra.com.br', 'www.ig.com.br', 'www.globo.com']
         cache = [ f.name for f in os.scandir('./screenshots/') if f.is_dir() ]
@@ -86,7 +121,7 @@ def get_domain(domain):
     print(f"looking dor domain at ./screenshots/{domain}/")    
     #screenshots = [(index, f.name[-8:-4], f.name) for (index, f) in enumerate(os.scandir(f'./screenshots/{domain}/'))]
     screenshots = [(index, int(tup[0]), tup[1]) for (index, tup) in enumerate(sorted([(f.name[-8:-4], f.name) for f in os.scandir(f'./screenshots/{domain}/')]))]
-    cache = [ f.name for f in os.scandir('./screenshots/') if f.is_dir() ]
+    cache = [ f.name for f in os.scandir('./screenshots/') if (f.is_dir()) and (f.name[-1:] != ')')]
     #screenshots = [ (f.name[-8:-4], f.name) for f in os.scandir(f'./screenshots/{domain}/') ]
     
     return render_template("screenshots.html", screenshots=screenshots, cache=cache, domain=domain)
