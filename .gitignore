@@ -17,3 +17,8 @@ instance/*
 
 ### Custom ###
 **/screenshots
+
+
+## SECURITY ##
+github.token
+aws.token
