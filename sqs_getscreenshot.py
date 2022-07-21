@@ -22,14 +22,13 @@ sqs_queue = sqs.get_queue_by_name(QueueName="websiteovertime-getscreenshot.fifo"
 # this is a simple method to find the closest URL in internet Archive
 # for a given initialURL. That's because it is not likely to found and exactly jan 1st
 def getFinalUrl(initialURL):
-    import requests
-    #url = "https://web.archive.org/web/20080101/http://www.microsoft.com/"
+    import requests    
     res = requests.get(initialURL)
     return res.request.url
 
 # Invoke selenium and chrome and save the screenshot for each file. Atempt to
 # make if more performatic and run in paralel with asyncio
-# Note: IT did not work in a cheap machine. LEt it run assincronous
+# Note: IT did not work in a cheap machine. LEt it run sincronous
 # @background
 def get_url_at_year(path, domain, year, random_date=False):
     url = f"http://{domain}"
@@ -45,7 +44,7 @@ def get_url_at_year(path, domain, year, random_date=False):
     
     if random_date:
         month = random.randint(1,4)
-        day   = random.randint(1,30)
+        day   = random.randint(1,28)
         target = f"0{month}{day}"
     else:
         target = '0101'
@@ -72,8 +71,6 @@ def get_url_at_year(path, domain, year, random_date=False):
 if __name__ == "__main__":
     while True:
         messages = sqs_queue.receive_messages(WaitTimeSeconds=10, MessageAttributeNames=['All'])
-        # if messages:
-        #     print("-----------------------------")
         for message in messages:
             message_ts = message.message_attributes.get("Path").get('StringValue')
             path    = message.message_attributes.get("Path").get('StringValue')
