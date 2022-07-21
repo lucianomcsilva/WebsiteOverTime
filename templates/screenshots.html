@@ -15,6 +15,27 @@
     margin-top:0em;
     padding:10px;
 }
+input {    
+    margin: 0px 
+}
+
+/* img:hover + div > button, button:hover { */
+img:hover + .divGetAgain, .divGetAgain:hover {
+    display: inline-block;
+}
+.divGetAgain {   
+    display: none; 
+   width: 300px;
+   position: relative;
+   top: -40px;   
+   width: 100%;
+   margin:0px;
+   padding: 0px;
+   clear:both;
+}
+.formGetAgain {
+    width:auto
+}
 </style>
 <hr style="margin:1em">
 <div class="container" style="text-align: center;">
@@ -26,7 +47,15 @@
             <div class='col-md'>
                 <h2> {{year}} </h2>
                 <!-- <img class="rounded wsot_img" src="/screenshots/www.apple.com/www.apple.com_2000.png"> -->
-                <img class="rounded wsot_img" src="screenshots/{{domain}}/{{image}}">                
+                <img class="rounded wsot_img" src="screenshots/{{domain}}/{{image}}">       
+                <div class="divGetAgain">
+                    <form  method="POST" id="formGetAgain{{year}}" class="formGetAgain">
+                        <input type="submit" id="" value="Get Again this screenshot"/>
+                        <input type="hidden" name="path"   id="path"   value="screenshots{{ request.path }}">
+                        <input type="hidden" name="domain" id="domain" value="{{ request.path[1:] }}">
+                        <input type="hidden" name="year"   id="year"   value="{{year}}">
+                    </form>
+                </div>
             </div>
         {% if loop.index0 % 3 == 2 or loop.last %}
         </div>

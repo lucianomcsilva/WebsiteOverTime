@@ -1,26 +1,20 @@
 
 import os
-
-from cs50 import SQL
 from flask import Flask, flash, jsonify, redirect, render_template, request, session
 from flask_session import Session
 from tempfile import mkdtemp
 
-
-import sys
 import re
 import os
 from urllib.parse import urlparse
-from selenium import webdriver
-from time import sleep
-import datetime;
+import time
+import datetime
 import uuid
-
+import shutil
 
 import boto3
 
 sqs = boto3.resource("sqs")
-#sqs_queue = sqs.get_queue_by_name(QueueName="websiteovertime-geturl.fifo")
 
 class bcolors:
     HEADER = '\033[95m'
@@ -34,32 +28,6 @@ class bcolors:
     UNDERLINE = '\033[4m'
     BLINK = '\033[5m'
 
-#url = 'https://www.apple.com/'
-
-def create_dir(domain):
-    base = 'screenshots'
-    if not os.path.exists(base):
-        os.mkdir(base)
-    path = f'{base}/{domain}'
-    if not os.path.exists(path):
-        os.mkdir(path)
-    else:
-        i = 2
-        while os.path.exists(path):
-            path = domain + f" ({i})"
-            if not os.path.exists(path):
-                os.mkdir(path)
-                break
-            i += 1
-    return path
-
-def getFinalUrl(initialURL):
-    import requests
-    #url = "https://web.archive.org/web/20080101/http://www.microsoft.com/"
-    res = requests.get(initialURL)
-    return res.request.url
-
-
 # Configure application
 app = Flask(__name__)
 
@@ -72,13 +40,40 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
+#diable cache for a better experience
+@app.after_request
+def add_header(r):
+    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    r.headers["Pragma"] = "no-cache"
+    r.headers["Expires"] = "0"
+    r.headers['Cache-Control'] = 'public, max-age=0'
+    return r
+
+#main route...just a search box and a list of hashtags of previous crawllings
 @app.route("/", methods=["GET", "POST"])
 def index():
+    cache = [ f.name for f in os.scandir('./screenshots/') if (f.is_dir()) and (f.name[-1:] != ')')] 
     if request.method == "POST":
-        url = "http://"+request.form.get('url').strip()
+        #Sanitize HTTPs
+        url = request.form.get('url').strip().lower()
+        print(f" 1 - {url}")
+        if url.startswith('http'):
+            print("it starts")
+            url = re.sub(r'https?://', '', url) 
+            print(f" 2 - {url}")
+        url = "http://"+url
+        print(f" 3 - {url}")
+        domain = urlparse(url).netloc
+
+        print(f"Received {request.form.get('url')}, converted to {url} and domain extracted was {domain}")
+
+        if domain in cache:
+            return redirect(f"/{url[7:]}")
+        
+        
 
         ct = datetime.datetime.now()
-
+        
         # Send message to SQS queue   
         sqs_queue = sqs.get_queue_by_name(QueueName="websiteovertime-geturl.fifo")     
 
@@ -102,68 +97,60 @@ def index():
             },
             MessageBody=(url)
         )
-        print(f"messa {response['MessageId']} sent")
+        print(f"message {response['MessageId']} sent")
         #get_url(url)
         #TODO sanatize the string
+        time.sleep(1)
         return redirect(f"/{url[7:]}")
-    else:
-        #cache = ['www.uol.com.br', 'www.terra.com.br', 'www.ig.com.br', 'www.globo.com']
-        cache = [ f.name for f in os.scandir('./screenshots/') if f.is_dir() ]
-        return render_template("home.html", cache=cache)
-    #return "nada ainda...aguarde"
-    
+    else: 
+        return render_template("home.html", cache=cache)    
+
+#domain route...just the same search box, a list of hashtags of previous crawllings and....the screenshots of this century
 @app.route("/<domain>", methods=["GET", "POST"])
 def get_domain(domain):
-    print(domain)
+    if request.method == "POST":
+        sqs = boto3.resource("sqs")        
+        sqs_queue = sqs.get_queue_by_name(QueueName="websiteovertime-getscreenshot.fifo")     
+        original_path = str(request.form.get('path').strip())
+        domain        = str(request.form.get('domain').strip())
+        year          = str(request.form.get('year').strip())
+        response = sqs_queue.send_message(            
+            MessageGroupId="WebSiteOverTime",
+            #for test purpose. In the future change for URL
+            MessageDeduplicationId=f'{uuid.uuid4()}',
+            MessageAttributes={
+                'Title': {
+                    'DataType': 'String',
+                    'StringValue': 'Request new screenshot'
+                },
+                'Domain': {
+                    'DataType': 'String',
+                    'StringValue': str(request.form.get('domain').strip())
+                },
+                'Path': {
+                    'DataType': 'String',
+                    'StringValue': str(request.form.get('path').strip())
+                },
+                'Year': {
+                    'DataType': 'String',
+                    'StringValue': f"{request.form.get('year').strip()}"
+                },
+                'Random': {
+                    'DataType': 'String',
+                    'StringValue': "True"
+                }                
+            },
+            MessageBody=(f"New Screenshot screeenshot/{str(request.form.get('domain').strip())}/{str(request.form.get('domain').strip())}_{str(request.form.get('year').strip())}")
+        )
+        print(f"message {response['MessageId']} sent (New Screenshot screeenshot/{str(request.form.get('domain').strip())}/{str(request.form.get('domain').strip())}_{str(request.form.get('year').strip())})")
+        shutil.copyfile("websiteovertime-working.png", f"{original_path}/{domain}_{year}.png")
+        time.sleep(1)
     if('favicon' in domain):
-        return "nothing for you here"
-    url = f"http://{domain}"
-    print(f"looking dor domain at ./screenshots/{domain}/")    
-    #screenshots = [(index, f.name[-8:-4], f.name) for (index, f) in enumerate(os.scandir(f'./screenshots/{domain}/'))]
+        return "nothing for you here"    
+    print(f"looking dor domain at ./screenshots/{domain}/")        
     screenshots = [(index, int(tup[0]), tup[1]) for (index, tup) in enumerate(sorted([(f.name[-8:-4], f.name) for f in os.scandir(f'./screenshots/{domain}/')]))]
-    cache = [ f.name for f in os.scandir('./screenshots/') if (f.is_dir()) and (f.name[-1:] != ')')]
-    #screenshots = [ (f.name[-8:-4], f.name) for f in os.scandir(f'./screenshots/{domain}/') ]
-    
-    return render_template("screenshots.html", screenshots=screenshots, cache=cache, domain=domain)
-    return url
-
-
-def get_url(url):
-    print(f"Requested screenshot for {bcolors.OKCYAN}{url}{bcolors.ENDC}")
-    
-    domain = urlparse(url).netloc
-    print(f"Domain for this request is {bcolors.OKCYAN}{domain}{bcolors.ENDC}")
-    
-    DRIVER = 'chromedriver'
-    options = webdriver.ChromeOptions()
-    options.headless = True
-    options.add_argument("--hide-scrollbars")
-
-    driver = webdriver.Chrome(options=options)
-    driver.set_window_size(1920, 1080)
-    driver.set_window_size(800, 600)
-    path = create_dir(domain)
-    for year in range(2000, 2021):
-        print(f"{bcolors.BOLD}{bcolors.OKGREEN}------------------  {bcolors.BLINK}{year}  ------------------{bcolors.ENDC}")
-        aURL = f'https://web.archive.org/web/{year}0101/{url}'        
-        print(f"Trying {bcolors.OKCYAN}{aURL}{bcolors.ENDC}")
-
-        finalUrl = getFinalUrl(aURL)    
-        print(f"best webarchive url found at  {bcolors.OKCYAN}{finalUrl}{bcolors.ENDC}")
-
-        driver.get(aURL)
-        driver.get_screenshot_as_file(f"{path}/{domain}_{year}.png")
-        print(f"File saved at {bcolors.OKCYAN}{path}/{domain}_{year}.png{bcolors.ENDC}")
-
-    driver.quit()
-
-# orquestrate de program
-def main():
-    # Ensure correct usage
-    if len(sys.argv) != 2:
-        sys.exit("Usage: python3 screenshots.py http://www.example.com")
-    url = sys.argv[1]
-    get_url(url)    
+    cache = [ f.name for f in os.scandir('./screenshots/') if (f.is_dir()) and (f.name[-1:] != ')')]    
+    return render_template("screenshots.html", screenshots=screenshots, cache=cache, domain=domain)    
 
 # call the program in a safe way
 if __name__ == '__main__':
