@@ -76,7 +76,8 @@ if __name__ == "__main__":
             path    = message.message_attributes.get("Path").get('StringValue')
             domain  = message.message_attributes.get("Domain").get('StringValue')
             year    = message.message_attributes.get("Year").get('StringValue')
-            random_date = True if message.message_attributes.get("Random").get('StringValue') else False
+            # random_date = True if message.message_attributes.get("Random").get('StringValue') else False
+            random_date = True if message.message_attributes.get("Random") else False            
 
             print("-----------------------------")       
             print(f"{message.message_id} {path} {domain} {year} {random_date}")
