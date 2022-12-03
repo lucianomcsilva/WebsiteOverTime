@@ -32,12 +32,12 @@ The POST route receives a URL to be crawled in a form request. There is a simple
 
 The domain route may receive a GET or POST request.
 
-The GET route built to lists. The cache list of previous crawled domains and the list of all pictures inside de screenshot folder for that domain. Both list are rendered on the [screenshots.html](screenshots/screenshots.html) template.
+The GET route built to lists. The cache list of previous crawled domains and the list of all pictures inside de screenshot folder for that domain. Both list are rendered on the [screenshots.html](templates/screenshots.html) template.
 
 The POST route receives a set of information regarding a specific screenshot (domain, year, and relative path of the file on the server) to crawl it again. This can be used in case of an error on previous crawls.  With these information an SQS event is emitted and after 1 second the user is redirected to the domain route again.
 
 ### Templates
-There are 2 templates, very similar. [Home.html](screenshots/home.html) and [screenshots.html](screenshots/screenshots.html). Both have a colorful logo on top with a search bar and a list of previous crawled pages. 
+There are 2 templates, very similar. [Home.html](templates/home.html) and [screenshots.html](templates/screenshots.html). Both have a colorful logo on top with a search bar and a list of previous crawled pages. 
 
 The search bar does a POST request to the index route. Clicking on the link of the previous crawled page does a GET request to the domain route, for that specific domain.
 
