@@ -101,5 +101,5 @@ if __name__ == "__main__":
         messages = sqs_queue.receive_messages(WaitTimeSeconds=10)
         for message in messages:            
             print(f"processing message {bcolors.OKCYAN}{message.message_id} {bcolors.OKGREEN}{message.body}{bcolors.ENDC}")            
-            get_url(message.body)
+            if (len(message.body) > 15): get_url(message.body)
             message.delete()
