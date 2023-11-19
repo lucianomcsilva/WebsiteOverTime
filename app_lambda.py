@@ -11,8 +11,9 @@ import time
 import datetime
 import uuid
 import shutil
-
+from s3path import S3Path
 import boto3
+import random
 
 sqs = boto3.resource("sqs")
 s3  = boto3.resource("s3")
@@ -40,6 +41,8 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 app.config["SESSION_FILE_DIR"] = mkdtemp()
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+
 #Session(app)
 
 #diable cache for a better experience
@@ -54,7 +57,9 @@ def add_header(r):
 #main route...just a search box and a list of hashtags of previous crawllings
 @app.route("/", methods=["GET", "POST"])
 def index():
-    cache = [ f.name for f in os.scandir('./screenshots/') if (f.is_dir()) and (f.name[-1:] != ')')] 
+    #cache = [ f.name for f in os.scandir('./screenshots/') if (f.is_dir()) and (f.name[-1:] != ')')] 
+    cache = [str(item)[29:] for item in S3Path('/websiteovertime/screenshots/').iterdir() if item.is_dir()]    
+
     if request.method == "POST":
         #Sanitize HTTPs
         url = request.form.get('url').strip().lower()
@@ -145,13 +150,17 @@ def get_domain(domain):
             MessageBody=(f"New Screenshot screeenshot/{str(request.form.get('domain').strip())}/{str(request.form.get('domain').strip())}_{str(request.form.get('year').strip())}")
         )
         print(f"message {response['MessageId']} sent (New Screenshot screeenshot/{str(request.form.get('domain').strip())}/{str(request.form.get('domain').strip())}_{str(request.form.get('year').strip())})")
-        shutil.copyfile("websiteovertime-working.png", f"{original_path}/{domain}_{year}.png")
+        #shutil.copyfile("websiteovertime-working.png", f"{original_path}/{domain}_{year}.png")
+        s3.Object('websiteovertime', f"screenshots/{domain}/{domain}_{year}.png").copy_from(CopySource='websiteovertime/screenshots/websiteovertime-working.png')
         time.sleep(1)
     if('favicon' in domain):
         return "nothing for you here"    
     print(f"looking dor domain at ./screenshots/{domain}/")        
-    screenshots = [(index, int(tup[0]), tup[1]) for (index, tup) in enumerate(sorted([(f.name[-8:-4], f.name) for f in os.scandir(f'./screenshots/{domain}/')]))]
-    cache = [ f.name for f in os.scandir('./screenshots/') if (f.is_dir()) and (f.name[-1:] != ')')]    
+    #screenshots = [(index, int(tup[0]), tup[1]) for (index, tup) in enumerate(sorted([(f.name[-8:-4], f.name) for f in os.scandir(f'./screenshots/{domain}/')]))]
+    #cache = [ f.name for f in os.scandir('./screenshots/') if (f.is_dir()) and (f.name[-1:] != ')')]    
+    s3_screenshots_obj = [f"https://websiteovertime.s3.amazonaws.com/screenshots/{str(item)[29:]}"  for item in S3Path(f'/websiteovertime/screenshots/{domain}').iterdir() if not item.is_dir()]        
+    screenshots = [(index, int(tup[0]), tup[1], random.randint(1, 999999)) for (index, tup) in enumerate(sorted([(f[-8:-4], f) for f in s3_screenshots_obj]))]
+    cache = [str(item)[29:] for item in S3Path('/websiteovertime/screenshots/').iterdir() if item.is_dir()]    
     return render_template("screenshots.html", screenshots=screenshots, cache=cache, domain=domain)    
 
 # call the program in a safe way
