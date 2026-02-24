@@ -19,15 +19,22 @@ class bcolors:
     BLINK = '\033[5m'
 
 
+prefix = 'local-' if os.environ.get('IS_LOCAL') == 'true' else ''
 sqs = boto3.resource("sqs")
-s3 = boto3.resource("s3")
-sqs_queue = sqs.get_queue_by_name(QueueName="websiteovertime-geturl.fifo")
+sqs_queue = sqs.get_queue_by_name(QueueName=f"{prefix}websiteovertime-geturl.fifo")
+
+def background(f):
+    def wrapped(*args, **kwargs):
+        return asyncio.get_event_loop().run_in_executor(None, f, *args, **kwargs)
+
+    return wrapped
 
 # This methdod create a new directory in case 
 # the requested domain was already crawled, avoiding
 # override the previous screenshot taken
 def create_dir(domain):
-    base = 'screenshots'
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    base = os.path.join(base_dir, 'screenshots')
     if not os.path.exists(base):
         os.mkdir(base)
     original_path = f'{base}/{domain}'
@@ -49,7 +56,7 @@ def create_dir(domain):
                 break
             i += 1
             
-    shutil.copyfile("websiteovertime-working.png", f"{original_path}/{domain}_0000.png")
+    shutil.copyfile(os.path.join(base_dir, "websiteovertime-working.png"), f"{original_path}/{domain}_0000.png")
     return original_path
 
 # Invoke selenium and chrome and save the screenshot for each file
@@ -58,14 +65,12 @@ def get_url(url):
     
     domain = urlparse(url).netloc
     print(f"Domain for this request is {bcolors.OKCYAN}{domain}{bcolors.ENDC}")
-    #path = create_dir(domain)
+    path = create_dir(domain)
 
-    for year in range(2000, 2024):
+    for year in range(2000, 2023):
         #get_url_at_year(path, domain, year)      
-        #shutil.copyfile("websiteovertime-working.png", f"{path}/{domain}_{year}.png")  
-        s3.Object('websiteovertime', f"screenshots/{domain}/{domain}_{year}.png").copy_from(CopySource='websiteovertime/screenshots/websiteovertime-working.png')
-
-        sqs_send_queue = sqs.get_queue_by_name(QueueName="websiteovertime-getscreenshot.fifo")     
+        shutil.copyfile(os.path.join(os.path.dirname(os.path.abspath(__file__)), "websiteovertime-working.png"), f"{path}/{domain}_{year}.png")  
+        sqs_send_queue = sqs.get_queue_by_name(QueueName=f"{prefix}websiteovertime-getscreenshot.fifo")     
 
         response = sqs_send_queue.send_message(            
             MessageGroupId="WebSiteOverTime",
@@ -82,7 +87,7 @@ def get_url(url):
                 },
                 'Path': {
                     'DataType': 'String',
-                    'StringValue': f"screenshots/{domain}/{domain}_{year}.png"
+                    'StringValue': path
                 },
                 'Year': {
                     'DataType': 'String',
@@ -93,23 +98,6 @@ def get_url(url):
         )
         print(f"message {response['MessageId']} sent")                
  
-def lambda_handler(event, context):
-    if event:
-        batch_item_failures = []
-        sqs_batch_response = {}
-     
-        for message in event["Records"]:
-            try:
-                # process message
-                print(f"processing message {bcolors.OKCYAN}{message.message_id} {bcolors.OKGREEN}{message.body}{bcolors.ENDC}")            
-                if (len(message.body) > 15): get_url(message.body)
-                pass
-            except Exception as e:
-                batch_item_failures.append({"itemIdentifier": message['messageId']})
-        
-        sqs_batch_response["batchItemFailures"] = batch_item_failures
-        return sqs_batch_response
-    
 if __name__ == "__main__":
     while True:
         messages = sqs_queue.receive_messages(WaitTimeSeconds=10)
@@ -117,4 +105,3 @@ if __name__ == "__main__":
             print(f"processing message {bcolors.OKCYAN}{message.message_id} {bcolors.OKGREEN}{message.body}{bcolors.ENDC}")            
             if (len(message.body) > 15): get_url(message.body)
             message.delete()
-            

@@ -1,70 +1,138 @@
-# Website Over Time
+<h1 align="center">
+  🌐 Website Over Time
+</h1>
 
-#### Video Demo:  https://www.youtube.com/watch?v=FYucijjcUzA&ab_channel=LucianoCamilo
+<p align="center">
+  <strong>A Historical Journey Through the Web's Evolution.</strong>
+</p>
 
-#### Description:
-  
-**WebSiteOverTime** is a simple, however, a long time wish and interesting project I had ever had. As someone that have lived the dawn and the gold ages of websites and being a historical curious and pretending to have an eidetic memory, I usually am mesmerized by the transition and evolution of some websites over time.
-The idea is really simples. Starting with some URL (e.g.: www.harvard.edu) and using the must needed digital library of the internet, a.k.a. internet archive (https://archive.org/), and some simple math that spreads requests over a one-year period, my project crawl the page on the site.
-Using a $5 computer at Amazon LightSail – I am scrooge as Carl Bark’s Scrooge McDuck – I built three python apps: 
--	A front-end flaks site, reversed proxied using nginx, serving the screenshots previously crawled as also a search box to POST new requests via a message in AWS SQS.
--	Two simple back-end scripts orchestrated over a queue in AWS SQS. The first one, named sqs_geturl.py, read the queue and create 22 new messages in a new topic that my other script, sqs_getscreenshots.py, read and using selenium and chromedriver open the website and save the screenshot in a convenient directory I have chosen (./screenshots/domain)
-  
-The figure shows how the site is rendered. And I hope you have as much fun as I have playing with this project.
-  
-![image](44.193.54.16_www.harvard.edu.png)
+<p align="center">
+  <img src="44.193.54.16_www.harvard.edu.png" alt="Website Over Time Interface" width="800">
+</p>
 
-## Description of each progrman 
-### Flask Front-end 
-The frontend application was written in flask as the websites we developed at nineth week. There are two routes, with similar templates (more on that, [later on](#templates)).
+<p align="center">
+  <a href="#about-the-project">About The Project</a> •
+  <a href="#how-it-works">How It Works</a> •
+  <a href="#architecture">Architecture</a> •
+  <a href="#getting-started">Getting Started</a> •
+  <a href="#documentation">Documentation</a>
+</p>
 
-The application runs on a single thread and listen to port 5000. A nginx server is used for a reverse proxy.
+---
 
-### Index route
+## 📖 About The Project
 
-The index route may receive a GET or POST request. Whichever it gets a list of cached folders is built. The cache list considers all non-duplicated folders identified by a number between parentheses. That’s needed to avoid some backup the backend generates when crawling the same domain twice.
+As someone deeply fascinated by the dawn of the internet, I created **Website Over Time** to observe the visual transformation of web design over decades.
 
-For the GET route, the template with the cache list is rendered.
+Starting with any URL (e.g., `www.harvard.edu`), this project leverages the digital library of the internet—the **[Internet Archive (Wayback Machine)](https://archive.org/)**—to crawl and retrieve the earliest snapshots form the year 2000 to the present day.
 
-The POST route receives a URL to be crawled in a form request. There is a simple sanitizing of the received text to extract the domain (e.g. www.website.com). In case of the domain is in cache, the app redirects the user to the domain route. Otherwise it emits a SQS queue in the ```websiteovertime-geturl.fifo``` topic with the URL in the body message. The post route ends redirecting the user to the domain route.
+<details>
+<summary><strong>🎥 Watch the Video Demo</strong></summary>
+<br>
+<a href="https://www.youtube.com/watch?v=FYucijjcUzA&ab_channel=LucianoCamilo">
+  <img src="https://img.youtube.com/vi/FYucijjcUzA/0.jpg" alt="Video Demo">
+</a>
+</details>
 
-### Domain route
+## ⚙️ How It Works
 
-The domain route may receive a GET or POST request.
+Because scraping decades of history takes time, standard blocking web requests wouldn't cut it. The project relies on an asynchronous event-driven architecture using **AWS SQS** queues and multiple background workers pulling the heavy weight.
 
-The GET route built to lists. The cache list of previous crawled domains and the list of all pictures inside de screenshot folder for that domain. Both list are rendered on the [screenshots.html](templates/screenshots.html) template.
+### Event Flow (Diagram)
 
-The POST route receives a set of information regarding a specific screenshot (domain, year, and relative path of the file on the server) to crawl it again. This can be used in case of an error on previous crawls.  With these information an SQS event is emitted and after 1 second the user is redirected to the domain route again.
+```mermaid
+sequenceDiagram
+    participant User
+    participant Flask App
+    participant SQS Queue 1
+    participant Worker (geturl)
+    participant SQS Queue 2
+    participant Worker (Selenium)
+    participant Internet Archive
 
-### Templates
-There are 2 templates, very similar. [Home.html](templates/home.html) and [screenshots.html](templates/screenshots.html). Both have a colorful logo on top with a search bar and a list of previous crawled pages. 
+    User->>Flask App: Submits Domain (e.g. harvard.edu)
+    Flask App->>SQS Queue 1: Enqueue target payload
+    SQS Queue 1->>Worker (geturl): Consume message
+    loop Every year (2000-2023)
+        Worker (geturl)->>SQS Queue 2: Enqueue sub-task (Domain, Year)
+    end
+    SQS Queue 2->>Worker (Selenium): Consume sub-tasks
+    Worker (Selenium)->>Internet Archive: Find closest snapshot & Navigate
+    Internet Archive-->>Worker (Selenium): Render historical webpage
+    Worker (Selenium)->>Worker (Selenium): Save Screenshot (800x600 resolution)
+```
 
-The search bar does a POST request to the index route. Clicking on the link of the previous crawled page does a GET request to the domain route, for that specific domain.
+> **Why 800x600 resolution?** Websites at the beginning of the century were designed for smaller CRT monitors. Forcing higher resolutions destroys the nostalgic sensation!
 
-Screenshots.html has also a responsive grid system up to 3 images per row. If you hover the mouse over the picture a button appears. Clicking on it a POST request is made for the domain route, with YEAR, PATH and DOMAIN (see [domain route](#domain-route)).
+## 🏗️ Architecture
 
-### Backend programs
-The standard Flask app is single threaded. So, if one tries to crawl new websites at the same time a flask method is running will be locked out.  
+The system exists in two main flavors:
+1. **Local / VPS**: Python applications managed via basic execution or `systemd`, storing screenshots to the local disk (`./screenshots`).
+2. **Serverless (Cloud)**: AWS Lambdas replacing standard python scripts, storing images in `AWS S3` giving it infinite scalability.
 
-To avoid that behavior this projected use an event driven architecture. As explained in the previous section, whenever requested to crawl a new URL or new screenshots the flask frontend application just fire a new SQS event. These events are listened by two backend scripts.
+### Key Technologies
+- **Backend Framework**: Flask
+- **Event Bus**: AWS SQS (`.fifo` queues for deduplication)
+- **Scraping Engine**: Selenium & Headless Chrome
+- **Storage**: AWS S3 (Cloud version), local `os` directories (Local Version)
 
-#### sqs_getscreenshot.py
+## 📁 Repository Structure
 
-This script continuously listened to the ```websiteovertime-geturl.fifo``` topic.  After a simple sanitizing (avoids blank requests) it calls a ```get_url``` method for the URL in the message body.
+We have documented the internals of each module in the `/docs` folder:
 
-The ```get_url``` functions extract the domain from the message body and a folder is created. In case the folder already exists, everything Is backed up in a new sequential numbered folder. 
+| Module / Component          | Documentation Link                                                                                   |
+| --------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Overall Architecture        | [`docs/system_architecture.md`](docs/system_architecture.md)                                         |
+| Flask App Front-End         | [`docs/app.md`](docs/app.md)                                                                         |
+| SQS URL Coordinator         | [`docs/sqs_geturl.md`](docs/sqs_geturl.md)                                                           |
+| SQS Screenshot Scraper      | [`docs/sqs_getscreenshot.md`](docs/sqs_getscreenshot.md)                                             |
+| Lambda Implementations      | [`docs/app_lambda.md`](docs/app_lambda.md), [`docs/sqs_geturl_lambda.md`](docs/sqs_geturl_lambda.md) |
+| Scratch & Testing Utilities | [`docs/test_s3.md`](docs/test_s3.md)                                                                 |
 
-A loop is created to emit 22 new events at ```websiteovertime-getscreenshot.fifo``` topic, one from each year from 2000 to 2022. Beside the year, the message also has the domain and the relative path on the server which the file must be saved.
+## 🚀 Getting Started
 
-It is also created 22 placeholder pictures so if the user requests the domain route it shows an image explaining the screenshots is in the process of being crawled. 
+### Prerequisites
 
-#### sqs_geturl.py
-This script continuously listened to the ```websiteovertime-getscreenshot.fifo``` topic.  For each message received it calls a ```get_url_at_year```.
+You need the following installed:
+- Python 3.8+
+- [Selenium](https://pypi.org/project/selenium/) and the matching `chromedriver` version.
+- [Boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html) configured with AWS API keys (for SQS/S3 integration).
 
-Firstly, we defined which final URL we should crawl. That's because it is not likely to found and exactly Jan 1st page for every domain. That’s made by calling ```getFinalUrl```, that uses the request library for that.
+### Installation
 
-With the URL we invoke an invisible google chrome through selenium for python, with no scrollbar or any others visual elements at 800x600 pixels resolution. This resolution was chosen because websites on the beginning of this century was design to this resolution and those got in a higher resolution would not transmit the sensation of that time.
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/lucianomcsilva/WebsiteOverTime.git
+   cd WebsiteOverTime
+   ```
 
-Selenium saves the screenshot at the received path, respecting the struct show on this line.
+2. **Install requirements:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-```driver.get_screenshot_as_file(f"{path}/{domain}_{year}.png")```
+3. **Start the background SQS Workers:**
+   ```bash
+   python sqs_geturl.py &
+   python sqs_getscreenshot.py &
+   ```
+
+4. **Boot the Flask Server:**
+   ```bash
+   python app.py
+   ```
+   Navigate to `http://localhost:5001/` to use the application!
+
+## 🧪 Testing
+
+This project contains simple sanity checks and S3 iteration queries using the AWS SDK (`test_s3.py`).
+
+Run the storage diagnostic using:
+```bash
+python test_s3.py
+```
+
+*Note: Ensure your `boto3` environment is preconfigured with the right IAM policies before executing bucket read operations.*
+
+---
+_Built with ❤️ for the nostalgic web explorer._

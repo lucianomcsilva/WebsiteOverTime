@@ -1,0 +1,721 @@
+Collecting awsgi==0.0.5 (from -r requirements.txt (line 1))
+  Using cached awsgi-0.0.5-py3-none-any.whl
+Collecting blinker==1.7.0 (from -r requirements.txt (line 2))
+  Using cached blinker-1.7.0-py3-none-any.whl.metadata (1.9 kB)
+Collecting boto3==1.29.1 (from -r requirements.txt (line 3))
+  Using cached boto3-1.29.1-py3-none-any.whl.metadata (6.7 kB)
+Collecting botocore==1.32.1 (from -r requirements.txt (line 4))
+  Using cached botocore-1.32.1-py3-none-any.whl.metadata (6.1 kB)
+Collecting cachelib==0.10.2 (from -r requirements.txt (line 5))
+  Using cached cachelib-0.10.2-py3-none-any.whl.metadata (2.0 kB)
+Collecting click==8.1.7 (from -r requirements.txt (line 6))
+  Using cached click-8.1.7-py3-none-any.whl.metadata (3.0 kB)
+Collecting Flask==3.0.0 (from -r requirements.txt (line 7))
+  Using cached flask-3.0.0-py3-none-any.whl.metadata (3.6 kB)
+Collecting Flask-Session==0.5.0 (from -r requirements.txt (line 8))
+  Using cached flask_session-0.5.0-py3-none-any.whl.metadata (1.4 kB)
+Collecting httptools==0.6.1 (from -r requirements.txt (line 9))
+  Using cached httptools-0.6.1.tar.gz (191 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting itsdangerous==2.1.2 (from -r requirements.txt (line 10))
+  Using cached itsdangerous-2.1.2-py3-none-any.whl.metadata (2.9 kB)
+Collecting Jinja2==3.1.2 (from -r requirements.txt (line 11))
+  Using cached Jinja2-3.1.2-py3-none-any.whl.metadata (3.5 kB)
+Collecting jmespath==1.0.1 (from -r requirements.txt (line 12))
+  Using cached jmespath-1.0.1-py3-none-any.whl.metadata (7.6 kB)
+Collecting MarkupSafe==2.1.3 (from -r requirements.txt (line 13))
+  Using cached markupsafe-2.1.3-cp313-cp313-macosx_14_0_arm64.whl
+Collecting python-dateutil==2.8.2 (from -r requirements.txt (line 14))
+  Using cached python_dateutil-2.8.2-py2.py3-none-any.whl.metadata (8.2 kB)
+Collecting s3path==0.5.0 (from -r requirements.txt (line 15))
+  Using cached s3path-0.5.0-py3-none-any.whl.metadata (5.8 kB)
+Collecting s3transfer==0.7.0 (from -r requirements.txt (line 16))
+  Using cached s3transfer-0.7.0-py3-none-any.whl.metadata (1.8 kB)
+Collecting six==1.16.0 (from -r requirements.txt (line 17))
+  Using cached six-1.16.0-py2.py3-none-any.whl.metadata (1.8 kB)
+Collecting smart-open==6.4.0 (from -r requirements.txt (line 18))
+  Using cached smart_open-6.4.0-py3-none-any.whl.metadata (21 kB)
+Collecting urllib3==2.0.7 (from -r requirements.txt (line 19))
+  Using cached urllib3-2.0.7-py3-none-any.whl.metadata (6.6 kB)
+Collecting uvloop==0.19.0 (from -r requirements.txt (line 20))
+  Using cached uvloop-0.19.0.tar.gz (2.3 MB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting websockets==12.0 (from -r requirements.txt (line 21))
+  Using cached websockets-12.0-py3-none-any.whl.metadata (6.6 kB)
+Collecting Werkzeug==3.0.1 (from -r requirements.txt (line 22))
+  Using cached werkzeug-3.0.1-py3-none-any.whl.metadata (4.1 kB)
+Using cached blinker-1.7.0-py3-none-any.whl (13 kB)
+Using cached boto3-1.29.1-py3-none-any.whl (135 kB)
+Using cached botocore-1.32.1-py3-none-any.whl (11.4 MB)
+Using cached cachelib-0.10.2-py3-none-any.whl (18 kB)
+Using cached click-8.1.7-py3-none-any.whl (97 kB)
+Using cached flask-3.0.0-py3-none-any.whl (99 kB)
+Using cached flask_session-0.5.0-py3-none-any.whl (7.2 kB)
+Using cached itsdangerous-2.1.2-py3-none-any.whl (15 kB)
+Using cached Jinja2-3.1.2-py3-none-any.whl (133 kB)
+Using cached jmespath-1.0.1-py3-none-any.whl (20 kB)
+Using cached python_dateutil-2.8.2-py2.py3-none-any.whl (247 kB)
+Using cached s3path-0.5.0-py3-none-any.whl (17 kB)
+Using cached s3transfer-0.7.0-py3-none-any.whl (79 kB)
+Using cached six-1.16.0-py2.py3-none-any.whl (11 kB)
+Using cached smart_open-6.4.0-py3-none-any.whl (57 kB)
+Using cached urllib3-2.0.7-py3-none-any.whl (124 kB)
+Using cached websockets-12.0-py3-none-any.whl (118 kB)
+Using cached werkzeug-3.0.1-py3-none-any.whl (226 kB)
+Building wheels for collected packages: httptools, uvloop
+  Building wheel for httptools (pyproject.toml): started
+  Building wheel for httptools (pyproject.toml): finished with status 'error'
+  error: subprocess-exited-with-error
+  
+  × Building wheel for httptools (pyproject.toml) did not run successfully.
+  │ exit code: 1
+  ╰─> [87 lines of output]
+      /private/var/folders/0t/779c6ljj4tb66qmrwn29nnzc0000gn/T/pip-build-env-6t8cecgs/overlay/lib/python3.13/site-packages/setuptools/_distutils/dist.py:287: UserWarning: Unknown distribution option: 'test_suite'
+        warnings.warn(msg)
+      /private/var/folders/0t/779c6ljj4tb66qmrwn29nnzc0000gn/T/pip-build-env-6t8cecgs/overlay/lib/python3.13/site-packages/setuptools/dist.py:765: SetuptoolsDeprecationWarning: License classifiers are deprecated.
+      !!
+      
+              ********************************************************************************
+              Please consider removing the following classifiers in favor of a SPDX license expression:
+      
+              License :: OSI Approved :: MIT License
+      
+              See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+              ********************************************************************************
+      
+      !!
+        self._finalize_license_expression()
+      running bdist_wheel
+      running build
+      running build_py
+      creating build/lib.macosx-14.0-arm64-cpython-313/httptools
+      copying httptools/_version.py -> build/lib.macosx-14.0-arm64-cpython-313/httptools
+      copying httptools/__init__.py -> build/lib.macosx-14.0-arm64-cpython-313/httptools
+      creating build/lib.macosx-14.0-arm64-cpython-313/httptools/parser
+      copying httptools/parser/__init__.py -> build/lib.macosx-14.0-arm64-cpython-313/httptools/parser
+      copying httptools/parser/errors.py -> build/lib.macosx-14.0-arm64-cpython-313/httptools/parser
+      running egg_info
+      writing httptools.egg-info/PKG-INFO
+      writing dependency_links to httptools.egg-info/dependency_links.txt
+      writing requirements to httptools.egg-info/requires.txt
+      writing top-level names to httptools.egg-info/top_level.txt
+      reading manifest file 'httptools.egg-info/SOURCES.txt'
+      reading manifest template 'MANIFEST.in'
+      adding license file 'LICENSE'
+      writing manifest file 'httptools.egg-info/SOURCES.txt'
+      running build_ext
+      building 'httptools.parser.parser' extension
+      creating build/temp.macosx-14.0-arm64-cpython-313/httptools/parser
+      creating build/temp.macosx-14.0-arm64-cpython-313/vendor/llhttp/src
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall -I/private/var/folders/0t/779c6ljj4tb66qmrwn29nnzc0000gn/T/pip-install-0jp4zpkc/httptools_230800a9c35240d494dc19497a3f45d2/vendor/llhttp/include -I/private/var/folders/0t/779c6ljj4tb66qmrwn29nnzc0000gn/T/pip-install-0jp4zpkc/httptools_230800a9c35240d494dc19497a3f45d2/vendor/llhttp/src -I/Users/lucianomcesilva/apps/WebsiteOverTime/legacy/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -c httptools/parser/parser.c -o build/temp.macosx-14.0-arm64-cpython-313/httptools/parser/parser.o -O2
+      httptools/parser/parser.c:849:59: warning: 'Py_UNICODE' is deprecated [-Wdeprecated-declarations]
+        849 | static CYTHON_INLINE size_t __Pyx_Py_UNICODE_strlen(const Py_UNICODE *u) {
+            |                                                           ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/cpython/unicodeobject.h:10:1: note: 'Py_UNICODE' has been explicitly marked deprecated here
+         10 | Py_DEPRECATED(3.13) typedef wchar_t Py_UNICODE;
+            | ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/pyport.h:251:54: note: expanded from macro 'Py_DEPRECATED'
+        251 | #define Py_DEPRECATED(VERSION_UNUSED) __attribute__((__deprecated__))
+            |                                                      ^
+      httptools/parser/parser.c:850:11: warning: 'Py_UNICODE' is deprecated [-Wdeprecated-declarations]
+        850 |     const Py_UNICODE *u_end = u;
+            |           ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/cpython/unicodeobject.h:10:1: note: 'Py_UNICODE' has been explicitly marked deprecated here
+         10 | Py_DEPRECATED(3.13) typedef wchar_t Py_UNICODE;
+            | ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/pyport.h:251:54: note: expanded from macro 'Py_DEPRECATED'
+        251 | #define Py_DEPRECATED(VERSION_UNUSED) __attribute__((__deprecated__))
+            |                                                      ^
+      httptools/parser/parser.c:3531:23: warning: assigning to 'char *' from 'const char *' discards qualifiers [-Wincompatible-pointer-types-discards-qualifiers]
+       3531 |       __pyx_v_err_pos = llhttp_get_error_pos(__pyx_v_self->_cparser);
+            |                       ^ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      httptools/parser/parser.c:9940:70: error: too few arguments to function call, expected 6, have 5
+       9938 |                 int ret = _PyLong_AsByteArray((PyLongObject *)v,
+            |                           ~~~~~~~~~~~~~~~~~~~
+       9939 |                                               bytes, sizeof(val),
+       9940 |                                               is_little, !is_unsigned);
+            |                                                                      ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/cpython/longobject.h:111:17: note: '_PyLong_AsByteArray' declared here
+        111 | PyAPI_FUNC(int) _PyLong_AsByteArray(PyLongObject* v,
+            |                 ^                   ~~~~~~~~~~~~~~~~
+        112 |     unsigned char* bytes, size_t n,
+            |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        113 |     int little_endian, int is_signed, int with_exceptions);
+            |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      httptools/parser/parser.c:10136:70: error: too few arguments to function call, expected 6, have 5
+       10134 |                 int ret = _PyLong_AsByteArray((PyLongObject *)v,
+             |                           ~~~~~~~~~~~~~~~~~~~
+       10135 |                                               bytes, sizeof(val),
+       10136 |                                               is_little, !is_unsigned);
+             |                                                                      ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/cpython/longobject.h:111:17: note: '_PyLong_AsByteArray' declared here
+        111 | PyAPI_FUNC(int) _PyLong_AsByteArray(PyLongObject* v,
+            |                 ^                   ~~~~~~~~~~~~~~~~
+        112 |     unsigned char* bytes, size_t n,
+            |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        113 |     int little_endian, int is_signed, int with_exceptions);
+            |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      3 warnings and 2 errors generated.
+      error: command '/usr/bin/clang' failed with exit code 1
+      [end of output]
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+  ERROR: Failed building wheel for httptools
+  Building wheel for uvloop (pyproject.toml): started
+  Building wheel for uvloop (pyproject.toml): finished with status 'error'
+  error: subprocess-exited-with-error
+  
+  × Building wheel for uvloop (pyproject.toml) did not run successfully.
+  │ exit code: 1
+  ╰─> [532 lines of output]
+      /private/var/folders/0t/779c6ljj4tb66qmrwn29nnzc0000gn/T/pip-build-env-t94_ebju/overlay/lib/python3.13/site-packages/setuptools/config/_apply_pyprojecttoml.py:82: SetuptoolsDeprecationWarning: `project.license` as a TOML table is deprecated
+      !!
+      
+              ********************************************************************************
+              Please use a simple string containing a SPDX expression for `project.license`. You can also use `project.license-files`. (Both options available on setuptools>=77.0.0).
+      
+              By 2027-Feb-18, you need to update your project and remove deprecated calls
+              or your builds will no longer be supported.
+      
+              See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+              ********************************************************************************
+      
+      !!
+        corresp(dist, value, root_dir)
+      /private/var/folders/0t/779c6ljj4tb66qmrwn29nnzc0000gn/T/pip-build-env-t94_ebju/overlay/lib/python3.13/site-packages/setuptools/config/_apply_pyprojecttoml.py:61: SetuptoolsDeprecationWarning: License classifiers are deprecated.
+      !!
+      
+              ********************************************************************************
+              Please consider removing the following classifiers in favor of a SPDX license expression:
+      
+              License :: OSI Approved :: Apache Software License
+              License :: OSI Approved :: MIT License
+      
+              See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+              ********************************************************************************
+      
+      !!
+        dist._finalize_license_expression()
+      /private/var/folders/0t/779c6ljj4tb66qmrwn29nnzc0000gn/T/pip-build-env-t94_ebju/overlay/lib/python3.13/site-packages/setuptools/dist.py:765: SetuptoolsDeprecationWarning: License classifiers are deprecated.
+      !!
+      
+              ********************************************************************************
+              Please consider removing the following classifiers in favor of a SPDX license expression:
+      
+              License :: OSI Approved :: Apache Software License
+              License :: OSI Approved :: MIT License
+      
+              See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+              ********************************************************************************
+      
+      !!
+        self._finalize_license_expression()
+      running bdist_wheel
+      running build
+      running build_py
+      creating build/lib.macosx-14.0-arm64-cpython-313/uvloop
+      copying uvloop/_version.py -> build/lib.macosx-14.0-arm64-cpython-313/uvloop
+      copying uvloop/_noop.py -> build/lib.macosx-14.0-arm64-cpython-313/uvloop
+      copying uvloop/_testbase.py -> build/lib.macosx-14.0-arm64-cpython-313/uvloop
+      copying uvloop/__init__.py -> build/lib.macosx-14.0-arm64-cpython-313/uvloop
+      running egg_info
+      writing uvloop.egg-info/PKG-INFO
+      writing dependency_links to uvloop.egg-info/dependency_links.txt
+      writing requirements to uvloop.egg-info/requires.txt
+      writing top-level names to uvloop.egg-info/top_level.txt
+      reading manifest file 'uvloop.egg-info/SOURCES.txt'
+      reading manifest template 'MANIFEST.in'
+      warning: no previously-included files matching '*' found under directory 'vendor/libuv/.git'
+      warning: no previously-included files matching '*' found under directory 'vendor/libuv/docs'
+      warning: no previously-included files matching '*' found under directory 'vendor/libuv/img'
+      adding license file 'LICENSE-APACHE'
+      adding license file 'LICENSE-MIT'
+      writing manifest file 'uvloop.egg-info/SOURCES.txt'
+      /private/var/folders/0t/779c6ljj4tb66qmrwn29nnzc0000gn/T/pip-build-env-t94_ebju/overlay/lib/python3.13/site-packages/setuptools/command/build_py.py:215: _Warning: Package 'uvloop.handles' is absent from the `packages` configuration.
+      !!
+      
+              ********************************************************************************
+              ############################
+              # Package would be ignored #
+              ############################
+              Python recognizes 'uvloop.handles' as an importable package[^1],
+              but it is absent from setuptools' `packages` configuration.
+      
+              This leads to an ambiguous overall configuration. If you want to distribute this
+              package, please make sure that 'uvloop.handles' is explicitly added
+              to the `packages` configuration field.
+      
+              Alternatively, you can also rely on setuptools' discovery methods
+              (for example by using `find_namespace_packages(...)`/`find_namespace:`
+              instead of `find_packages(...)`/`find:`).
+      
+              You can read more about "package discovery" on setuptools documentation page:
+      
+              - https://setuptools.pypa.io/en/latest/userguide/package_discovery.html
+      
+              If you don't want 'uvloop.handles' to be distributed and are
+              already explicitly excluding 'uvloop.handles' via
+              `find_namespace_packages(...)/find_namespace` or `find_packages(...)/find`,
+              you can try to use `exclude_package_data`, or `include-package-data=False` in
+              combination with a more fine grained `package-data` configuration.
+      
+              You can read more about "package data files" on setuptools documentation page:
+      
+              - https://setuptools.pypa.io/en/latest/userguide/datafiles.html
+      
+      
+              [^1]: For Python, any directory (with suitable naming) can be imported,
+                    even if it does not contain any `.py` files.
+                    On the other hand, currently there is no concept of package data
+                    directory, all directories are treated like packages.
+              ********************************************************************************
+      
+      !!
+        check.warn(importable)
+      /private/var/folders/0t/779c6ljj4tb66qmrwn29nnzc0000gn/T/pip-build-env-t94_ebju/overlay/lib/python3.13/site-packages/setuptools/command/build_py.py:215: _Warning: Package 'uvloop.includes' is absent from the `packages` configuration.
+      !!
+      
+              ********************************************************************************
+              ############################
+              # Package would be ignored #
+              ############################
+              Python recognizes 'uvloop.includes' as an importable package[^1],
+              but it is absent from setuptools' `packages` configuration.
+      
+              This leads to an ambiguous overall configuration. If you want to distribute this
+              package, please make sure that 'uvloop.includes' is explicitly added
+              to the `packages` configuration field.
+      
+              Alternatively, you can also rely on setuptools' discovery methods
+              (for example by using `find_namespace_packages(...)`/`find_namespace:`
+              instead of `find_packages(...)`/`find:`).
+      
+              You can read more about "package discovery" on setuptools documentation page:
+      
+              - https://setuptools.pypa.io/en/latest/userguide/package_discovery.html
+      
+              If you don't want 'uvloop.includes' to be distributed and are
+              already explicitly excluding 'uvloop.includes' via
+              `find_namespace_packages(...)/find_namespace` or `find_packages(...)/find`,
+              you can try to use `exclude_package_data`, or `include-package-data=False` in
+              combination with a more fine grained `package-data` configuration.
+      
+              You can read more about "package data files" on setuptools documentation page:
+      
+              - https://setuptools.pypa.io/en/latest/userguide/datafiles.html
+      
+      
+              [^1]: For Python, any directory (with suitable naming) can be imported,
+                    even if it does not contain any `.py` files.
+                    On the other hand, currently there is no concept of package data
+                    directory, all directories are treated like packages.
+              ********************************************************************************
+      
+      !!
+        check.warn(importable)
+      copying uvloop/cbhandles.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop
+      copying uvloop/cbhandles.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop
+      copying uvloop/dns.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop
+      copying uvloop/errors.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop
+      copying uvloop/loop.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop
+      copying uvloop/loop.pyi -> build/lib.macosx-14.0-arm64-cpython-313/uvloop
+      copying uvloop/loop.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop
+      copying uvloop/lru.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop
+      copying uvloop/pseudosock.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop
+      copying uvloop/py.typed -> build/lib.macosx-14.0-arm64-cpython-313/uvloop
+      copying uvloop/request.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop
+      copying uvloop/request.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop
+      copying uvloop/server.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop
+      copying uvloop/server.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop
+      copying uvloop/sslproto.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop
+      copying uvloop/sslproto.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop
+      creating build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/async_.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/async_.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/basetransport.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/basetransport.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/check.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/check.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/fsevent.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/fsevent.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/handle.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/handle.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/idle.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/idle.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/pipe.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/pipe.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/poll.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/poll.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/process.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/process.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/stream.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/stream.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/streamserver.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/streamserver.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/tcp.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/tcp.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/timer.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/timer.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/udp.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      copying uvloop/handles/udp.pyx -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/handles
+      creating build/lib.macosx-14.0-arm64-cpython-313/uvloop/includes
+      copying uvloop/includes/__init__.py -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/includes
+      copying uvloop/includes/consts.pxi -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/includes
+      copying uvloop/includes/debug.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/includes
+      copying uvloop/includes/flowcontrol.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/includes
+      copying uvloop/includes/python.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/includes
+      copying uvloop/includes/stdlib.pxi -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/includes
+      copying uvloop/includes/system.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/includes
+      copying uvloop/includes/uv.pxd -> build/lib.macosx-14.0-arm64-cpython-313/uvloop/includes
+      running build_ext
+      checking for a BSD-compatible install... /usr/bin/install -c
+      checking whether build environment is sane... yes
+      checking for a race-free mkdir -p... ./install-sh -c -d
+      checking for gawk... no
+      checking for mawk... no
+      checking for nawk... no
+      checking for awk... awk
+      checking whether make sets $(MAKE)... yes
+      checking whether make supports nested variables... yes
+      checking whether to enable maintainer-specific portions of Makefiles... yes
+      checking build system type... aarch64-apple-darwin24.6.0
+      checking host system type... aarch64-apple-darwin24.6.0
+      checking for gcc... gcc
+      checking whether the C compiler works... yes
+      checking for C compiler default output file name... a.out
+      checking for suffix of executables...
+      checking whether we are cross compiling... no
+      checking for suffix of object files... o
+      checking whether the compiler supports GNU C... yes
+      checking whether gcc accepts -g... yes
+      checking for gcc option to enable C11 features... none needed
+      checking whether gcc understands -c and -o together... yes
+      checking whether make supports the include directive... yes (GNU style)
+      checking dependency style of gcc... gcc3
+      checking for gcc way to treat warnings as errors... -Werror
+      checking if gcc supports __attribute__(( visibility("default") ))... yes
+      checking if gcc supports -fvisibility=hidden... yes
+      checking if gcc supports -fno-strict-aliasing flag... yes
+      checking if gcc supports -fno-strict-aliasing flag... yes
+      checking if gcc supports -g flag... yes
+      checking if gcc supports -std=gnu89 flag... yes
+      checking if gcc supports -Wall flag... yes
+      checking if gcc supports -Wextra flag... yes
+      checking if gcc supports -Wno-long-long flag... yes
+      checking if gcc supports -Wno-unused-parameter flag... yes
+      checking if gcc supports -Wstrict-prototypes flag... yes
+      checking for ar... ar
+      checking the archiver (ar) interface... ar
+      checking how to print strings... printf
+      checking for a sed that does not truncate output... /usr/bin/sed
+      checking for grep that handles long lines and -e... /usr/bin/grep
+      checking for egrep... /usr/bin/grep -E
+      checking for fgrep... /usr/bin/grep -F
+      checking for ld used by gcc... /Library/Developer/CommandLineTools/usr/bin/ld
+      checking if the linker (/Library/Developer/CommandLineTools/usr/bin/ld) is GNU ld... no
+      checking for BSD- or MS-compatible name lister (nm)... /usr/bin/nm -B
+      checking the name lister (/usr/bin/nm -B) interface... BSD nm
+      checking whether ln -s works... yes
+      checking the maximum length of command line arguments... 786432
+      checking how to convert aarch64-apple-darwin24.6.0 file names to aarch64-apple-darwin24.6.0 format... func_convert_file_noop
+      checking how to convert aarch64-apple-darwin24.6.0 file names to toolchain format... func_convert_file_noop
+      checking for /Library/Developer/CommandLineTools/usr/bin/ld option to reload object files... -r
+      checking for objdump... objdump
+      checking how to recognize dependent libraries... pass_all
+      checking for dlltool... no
+      checking how to associate runtime and link libraries... printf %s\n
+      checking for archiver @FILE support... no
+      checking for strip... strip
+      checking for ranlib... ranlib
+      checking command to parse /usr/bin/nm -B output from gcc object... ok
+      checking for sysroot... no
+      checking for a working dd... /bin/dd
+      checking how to truncate binary pipes... /bin/dd bs=4096 count=1
+      checking for mt... no
+      checking if : is a manifest tool... no
+      checking for dsymutil... dsymutil
+      checking for nmedit... nmedit
+      checking for lipo... lipo
+      checking for otool... otool
+      checking for otool64... no
+      checking for -single_module linker flag... ld: warning: -single_module is obsolete
+      no
+      checking for -exported_symbols_list linker flag... yes
+      checking for -force_load linker flag... yes
+      checking for stdio.h... yes
+      checking for stdlib.h... yes
+      checking for string.h... yes
+      checking for inttypes.h... yes
+      checking for stdint.h... yes
+      checking for strings.h... yes
+      checking for sys/stat.h... yes
+      checking for sys/types.h... yes
+      checking for unistd.h... yes
+      checking for dlfcn.h... yes
+      checking for objdir... .libs
+      checking if gcc supports -fno-rtti -fno-exceptions... yes
+      checking for gcc option to produce PIC... -fno-common -DPIC
+      checking if gcc PIC flag -fno-common -DPIC works... yes
+      checking if gcc static flag -static works... no
+      checking if gcc supports -c -o file.o... yes
+      checking if gcc supports -c -o file.o... (cached) yes
+      checking whether the gcc linker (/Library/Developer/CommandLineTools/usr/bin/ld) supports shared libraries... yes
+      checking dynamic linker characteristics... darwin24.6.0 dyld
+      checking how to hardcode library paths into programs... immediate
+      checking whether stripping libraries is possible... yes
+      checking if libtool supports shared libraries... yes
+      checking whether to build shared libraries... yes
+      checking whether to build static libraries... yes
+      checking whether make supports nested variables... (cached) yes
+      checking how to run the C preprocessor... gcc -E
+      checking whether gcc is Clang... yes
+      checking whether Clang needs flag to prevent "argument unused" warning when linking with -pthread... no
+      checking for joinable pthread attribute... PTHREAD_CREATE_JOINABLE
+      checking whether more special flags are required for pthreads... no
+      checking for PTHREAD_PRIO_INHERIT... yes
+      checking for library containing dlopen... none required
+      checking for library containing kstat_lookup... no
+      checking for library containing gethostbyname... none required
+      checking for library containing perfstat_cpu... no
+      checking for library containing clock_gettime... none required
+      checking for library containing sendfile... none required
+      checking for library containing socket... none required
+      checking for special C compiler options needed for large files... no
+      checking for _FILE_OFFSET_BITS value needed for large files... no
+      checking for sys/ahafs_evProds.h... no
+      checking that generated files are newer than configure... done
+      configure: creating ./config.status
+      config.status: creating Makefile
+      config.status: creating libuv.pc
+      config.status: executing depfiles commands
+      config.status: executing libtool commands
+        CC       src/unix/libuv_la-async.lo
+        CC       src/unix/libuv_la-core.lo
+        CC       src/unix/libuv_la-fs.lo
+        CC       src/unix/libuv_la-getaddrinfo.lo
+        CC       src/unix/libuv_la-dl.lo
+        CC       src/unix/libuv_la-loop-watcher.lo
+        CC       src/unix/libuv_la-getnameinfo.lo
+        CC       src/unix/libuv_la-loop.lo
+        CC       src/unix/libuv_la-pipe.lo
+        CC       src/unix/libuv_la-poll.lo
+        CC       src/unix/libuv_la-process.lo
+        CC       src/unix/libuv_la-random-devurandom.lo
+        CC       src/unix/libuv_la-signal.lo
+        CC       src/unix/libuv_la-stream.lo
+        CC       src/unix/libuv_la-tcp.lo
+        CC       src/unix/libuv_la-thread.lo
+        CC       src/unix/libuv_la-tty.lo
+        CC       src/unix/libuv_la-udp.lo
+        CC       src/unix/libuv_la-bsd-ifaddrs.lo
+        CC       src/unix/libuv_la-darwin-proctitle.lo
+        CC       src/unix/libuv_la-darwin.lo
+        CC       src/unix/libuv_la-fsevents.lo
+        CC       src/unix/libuv_la-kqueue.lo
+        CC       src/unix/libuv_la-proctitle.lo
+        CC       src/unix/libuv_la-random-getentropy.lo
+        CC       src/libuv_la-fs-poll.lo
+        CC       src/libuv_la-idna.lo
+        CC       src/libuv_la-inet.lo
+        CC       src/libuv_la-random.lo
+        CC       src/libuv_la-strscpy.lo
+        CC       src/libuv_la-thread-common.lo
+        CC       src/libuv_la-threadpool.lo
+        CC       src/libuv_la-timer.lo
+        CC       src/libuv_la-uv-data-getter-setters.lo
+        CC       src/libuv_la-uv-common.lo
+        CC       src/libuv_la-version.lo
+        CC       src/libuv_la-strtok.lo
+        CCLD     libuv.la
+      building 'uvloop.loop' extension
+      creating build/temp.macosx-14.0-arm64-cpython-313/uvloop
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall -I/Users/lucianomcesilva/apps/WebsiteOverTime/legacy/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I/private/var/folders/0t/779c6ljj4tb66qmrwn29nnzc0000gn/T/pip-install-0jp4zpkc/uvloop_3646f719403c468298335df268155338/vendor/libuv/include -c uvloop/loop.c -o build/temp.macosx-14.0-arm64-cpython-313/uvloop/loop.o -O2
+      uvloop/loop.c:860:59: warning: 'Py_UNICODE' is deprecated [-Wdeprecated-declarations]
+        860 | static CYTHON_INLINE size_t __Pyx_Py_UNICODE_strlen(const Py_UNICODE *u) {
+            |                                                           ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/cpython/unicodeobject.h:10:1: note: 'Py_UNICODE' has been explicitly marked deprecated here
+         10 | Py_DEPRECATED(3.13) typedef wchar_t Py_UNICODE;
+            | ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/pyport.h:251:54: note: expanded from macro 'Py_DEPRECATED'
+        251 | #define Py_DEPRECATED(VERSION_UNUSED) __attribute__((__deprecated__))
+            |                                                      ^
+      uvloop/loop.c:861:11: warning: 'Py_UNICODE' is deprecated [-Wdeprecated-declarations]
+        861 |     const Py_UNICODE *u_end = u;
+            |           ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/cpython/unicodeobject.h:10:1: note: 'Py_UNICODE' has been explicitly marked deprecated here
+         10 | Py_DEPRECATED(3.13) typedef wchar_t Py_UNICODE;
+            | ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/pyport.h:251:54: note: expanded from macro 'Py_DEPRECATED'
+        251 | #define Py_DEPRECATED(VERSION_UNUSED) __attribute__((__deprecated__))
+            |                                                      ^
+      uvloop/loop.c:4446:39: error: call to undeclared function '_PyInterpreterState_GetConfig'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+       4446 |     __pyx_assertions_enabled_flag = ! _PyInterpreterState_GetConfig(__Pyx_PyThreadState_Current->interp)->optimization_level;
+            |                                       ^
+      uvloop/loop.c:4446:107: error: member reference type 'int' is not a pointer
+       4446 |     __pyx_assertions_enabled_flag = ! _PyInterpreterState_GetConfig(__Pyx_PyThreadState_Current->interp)->optimization_level;
+            |                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ^
+      uvloop/loop.c:110087:5: error: call to undeclared function '_Py_RestoreSignals'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+       110087 |     _Py_RestoreSignals();
+              |     ^
+      uvloop/loop.c:153435:39: warning: use of bitwise '&' with boolean operands [-Wbitwise-instead-of-logical]
+       153435 |   if (CYTHON_COMPILING_IN_CPYTHON && ((__pyx_freecount_6uvloop_4loop_Handle < 250) & (Py_TYPE(o)->tp_basicsize == sizeof(struct __pyx_obj_6uvloop_4loop_Handle)) & ((Py_TYPE(o)->tp_flags & (Py_TPFLAGS_IS_ABSTRACT | Py_TPFLAGS_HEAPTYPE)) == 0))) {
+              |                                      ~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+              |                                                                                                                                                                  &&
+      uvloop/loop.c:153435:39: note: cast one or both operands to int to silence this warning
+      uvloop/loop.c:153618:39: warning: use of bitwise '&' with boolean operands [-Wbitwise-instead-of-logical]
+       153618 |   if (CYTHON_COMPILING_IN_CPYTHON && ((__pyx_freecount_6uvloop_4loop_TimerHandle < 250) & (Py_TYPE(o)->tp_basicsize == sizeof(struct __pyx_obj_6uvloop_4loop_TimerHandle)) & ((Py_TYPE(o)->tp_flags & (Py_TPFLAGS_IS_ABSTRACT | Py_TPFLAGS_HEAPTYPE)) == 0))) {
+              |                                      ~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+              |                                                                                                                                                                            &&
+      uvloop/loop.c:153618:39: note: cast one or both operands to int to silence this warning
+      uvloop/loop.c:156657:39: warning: use of bitwise '&' with boolean operands [-Wbitwise-instead-of-logical]
+       156657 |   if (CYTHON_COMPILING_IN_CPYTHON && ((__pyx_freecount_6uvloop_4loop__StreamWriteContext < 250) & (Py_TYPE(o)->tp_basicsize == sizeof(struct __pyx_obj_6uvloop_4loop__StreamWriteContext)) & ((Py_TYPE(o)->tp_flags & (Py_TPFLAGS_IS_ABSTRACT | Py_TPFLAGS_HEAPTYPE)) == 0))) {
+              |                                      ~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+              |                                                                                                                                                                                            &&
+      uvloop/loop.c:156657:39: note: cast one or both operands to int to silence this warning
+      uvloop/loop.c:157032:39: warning: use of bitwise '&' with boolean operands [-Wbitwise-instead-of-logical]
+       157032 |   if (CYTHON_COMPILING_IN_CPYTHON && ((__pyx_freecount_6uvloop_4loop_SockAddrHolder < 250) & (Py_TYPE(o)->tp_basicsize == sizeof(struct __pyx_obj_6uvloop_4loop_SockAddrHolder)) & ((Py_TYPE(o)->tp_flags & (Py_TPFLAGS_IS_ABSTRACT | Py_TPFLAGS_HEAPTYPE)) == 0))) {
+              |                                      ~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+              |                                                                                                                                                                                  &&
+      uvloop/loop.c:157032:39: note: cast one or both operands to int to silence this warning
+      uvloop/loop.c:157159:39: warning: use of bitwise '&' with boolean operands [-Wbitwise-instead-of-logical]
+       157159 |   if (CYTHON_COMPILING_IN_CPYTHON && ((__pyx_freecount_6uvloop_4loop_AddrInfo < 250) & (Py_TYPE(o)->tp_basicsize == sizeof(struct __pyx_obj_6uvloop_4loop_AddrInfo)) & ((Py_TYPE(o)->tp_flags & (Py_TPFLAGS_IS_ABSTRACT | Py_TPFLAGS_HEAPTYPE)) == 0))) {
+              |                                      ~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+              |                                                                                                                                                                      &&
+      uvloop/loop.c:157159:39: note: cast one or both operands to int to silence this warning
+      uvloop/loop.c:157540:39: warning: use of bitwise '&' with boolean operands [-Wbitwise-instead-of-logical]
+       157540 |   if (CYTHON_COMPILING_IN_CPYTHON && ((__pyx_freecount_6uvloop_4loop__UDPSendContext < 250) & (Py_TYPE(o)->tp_basicsize == sizeof(struct __pyx_obj_6uvloop_4loop__UDPSendContext)) & ((Py_TYPE(o)->tp_flags & (Py_TPFLAGS_IS_ABSTRACT | Py_TPFLAGS_HEAPTYPE)) == 0))) {
+              |                                      ~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+              |                                                                                                                                                                                    &&
+      uvloop/loop.c:157540:39: note: cast one or both operands to int to silence this warning
+      uvloop/loop.c:170547:7: error: call to undeclared function '_PyDict_SetItem_KnownHash'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+       170547 |   if (__Pyx_SetNameInClass(__pyx_t_2, __pyx_n_s_init, __pyx_t_6) < 0) __PYX_ERR(0, 3276, __pyx_L1_error)
+              |       ^
+      uvloop/loop.c:4637:38: note: expanded from macro '__Pyx_SetNameInClass'
+       4637 |     (likely(PyDict_CheckExact(ns)) ? _PyDict_SetItem_KnownHash(ns, name, value, ((PyASCIIObject *) name)->hash) : PyObject_SetItem(ns, name, value))
+            |                                      ^
+      uvloop/loop.c:170547:7: note: did you mean '_PyDict_GetItem_KnownHash'?
+      uvloop/loop.c:4637:38: note: expanded from macro '__Pyx_SetNameInClass'
+       4637 |     (likely(PyDict_CheckExact(ns)) ? _PyDict_SetItem_KnownHash(ns, name, value, ((PyASCIIObject *) name)->hash) : PyObject_SetItem(ns, name, value))
+            |                                      ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/cpython/dictobject.h:38:24: note: '_PyDict_GetItem_KnownHash' declared here
+         38 | PyAPI_FUNC(PyObject *) _PyDict_GetItem_KnownHash(PyObject *mp, PyObject *key,
+            |                        ^
+      uvloop/loop.c:172680:19: error: call to undeclared function '_PySet_NextEntry'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+       172680 |         int ret = _PySet_NextEntry(iter_obj, ppos, value, &hash);
+              |                   ^
+      uvloop/loop.c:174030:13: error: call to undeclared function '_PyUnicode_FastCopyCharacters'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+       174030 |             _PyUnicode_FastCopyCharacters(result_uval, char_pos, uval, 0, ulength);
+              |             ^
+      uvloop/loop.c:174030:13: note: did you mean 'PyUnicode_CopyCharacters'?
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/cpython/unicodeobject.h:416:24: note: 'PyUnicode_CopyCharacters' declared here
+        416 | PyAPI_FUNC(Py_ssize_t) PyUnicode_CopyCharacters(
+            |                        ^
+      uvloop/loop.c:174515:13: error: call to undeclared function '_PyGen_SetStopIterationValue'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+       174515 |             _PyGen_SetStopIterationValue(result);
+              |             ^
+      uvloop/loop.c:174515:13: note: did you mean '__Pyx_PyGen__FetchStopIterationValue'?
+      uvloop/loop.c:174270:12: note: '__Pyx_PyGen__FetchStopIterationValue' declared here
+       174270 | static int __Pyx_PyGen__FetchStopIterationValue(CYTHON_UNUSED PyThreadState *__pyx_tstate, PyObject **pvalue) {
+              |            ^
+      uvloop/loop.c:175485:5: error: call to undeclared function '_PyErr_FormatFromCause'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+       175485 |     _PyErr_FormatFromCause(
+              |     ^
+      uvloop/loop.c:177392:70: error: too few arguments to function call, expected 6, have 5
+       177390 |                 int ret = _PyLong_AsByteArray((PyLongObject *)v,
+              |                           ~~~~~~~~~~~~~~~~~~~
+       177391 |                                               bytes, sizeof(val),
+       177392 |                                               is_little, !is_unsigned);
+              |                                                                      ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/cpython/longobject.h:111:17: note: '_PyLong_AsByteArray' declared here
+        111 | PyAPI_FUNC(int) _PyLong_AsByteArray(PyLongObject* v,
+            |                 ^                   ~~~~~~~~~~~~~~~~
+        112 |     unsigned char* bytes, size_t n,
+            |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        113 |     int little_endian, int is_signed, int with_exceptions);
+            |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      uvloop/loop.c:177588:70: error: too few arguments to function call, expected 6, have 5
+       177586 |                 int ret = _PyLong_AsByteArray((PyLongObject *)v,
+              |                           ~~~~~~~~~~~~~~~~~~~
+       177587 |                                               bytes, sizeof(val),
+       177588 |                                               is_little, !is_unsigned);
+              |                                                                      ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/cpython/longobject.h:111:17: note: '_PyLong_AsByteArray' declared here
+        111 | PyAPI_FUNC(int) _PyLong_AsByteArray(PyLongObject* v,
+            |                 ^                   ~~~~~~~~~~~~~~~~
+        112 |     unsigned char* bytes, size_t n,
+            |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        113 |     int little_endian, int is_signed, int with_exceptions);
+            |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      uvloop/loop.c:177822:70: error: too few arguments to function call, expected 6, have 5
+       177820 |                 int ret = _PyLong_AsByteArray((PyLongObject *)v,
+              |                           ~~~~~~~~~~~~~~~~~~~
+       177821 |                                               bytes, sizeof(val),
+       177822 |                                               is_little, !is_unsigned);
+              |                                                                      ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/cpython/longobject.h:111:17: note: '_PyLong_AsByteArray' declared here
+        111 | PyAPI_FUNC(int) _PyLong_AsByteArray(PyLongObject* v,
+            |                 ^                   ~~~~~~~~~~~~~~~~
+        112 |     unsigned char* bytes, size_t n,
+            |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        113 |     int little_endian, int is_signed, int with_exceptions);
+            |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      uvloop/loop.c:178094:70: error: too few arguments to function call, expected 6, have 5
+       178092 |                 int ret = _PyLong_AsByteArray((PyLongObject *)v,
+              |                           ~~~~~~~~~~~~~~~~~~~
+       178093 |                                               bytes, sizeof(val),
+       178094 |                                               is_little, !is_unsigned);
+              |                                                                      ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/cpython/longobject.h:111:17: note: '_PyLong_AsByteArray' declared here
+        111 | PyAPI_FUNC(int) _PyLong_AsByteArray(PyLongObject* v,
+            |                 ^                   ~~~~~~~~~~~~~~~~
+        112 |     unsigned char* bytes, size_t n,
+            |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        113 |     int little_endian, int is_signed, int with_exceptions);
+            |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      uvloop/loop.c:178290:70: error: too few arguments to function call, expected 6, have 5
+       178288 |                 int ret = _PyLong_AsByteArray((PyLongObject *)v,
+              |                           ~~~~~~~~~~~~~~~~~~~
+       178289 |                                               bytes, sizeof(val),
+       178290 |                                               is_little, !is_unsigned);
+              |                                                                      ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/cpython/longobject.h:111:17: note: '_PyLong_AsByteArray' declared here
+        111 | PyAPI_FUNC(int) _PyLong_AsByteArray(PyLongObject* v,
+            |                 ^                   ~~~~~~~~~~~~~~~~
+        112 |     unsigned char* bytes, size_t n,
+            |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        113 |     int little_endian, int is_signed, int with_exceptions);
+            |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      uvloop/loop.c:178562:70: error: too few arguments to function call, expected 6, have 5
+       178560 |                 int ret = _PyLong_AsByteArray((PyLongObject *)v,
+              |                           ~~~~~~~~~~~~~~~~~~~
+       178561 |                                               bytes, sizeof(val),
+       178562 |                                               is_little, !is_unsigned);
+              |                                                                      ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/cpython/longobject.h:111:17: note: '_PyLong_AsByteArray' declared here
+        111 | PyAPI_FUNC(int) _PyLong_AsByteArray(PyLongObject* v,
+            |                 ^                   ~~~~~~~~~~~~~~~~
+        112 |     unsigned char* bytes, size_t n,
+            |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        113 |     int little_endian, int is_signed, int with_exceptions);
+            |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      8 warnings and 14 errors generated.
+      error: command '/usr/bin/clang' failed with exit code 1
+      [end of output]
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+  ERROR: Failed building wheel for uvloop
+Failed to build httptools uvloop
+
+[notice] A new release of pip is available: 25.0.1 -> 26.0.1
+[notice] To update, run: pip install --upgrade pip
+ERROR: Failed to build installable wheels for some pyproject.toml based projects (httptools, uvloop)
