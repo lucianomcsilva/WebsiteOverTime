@@ -303,14 +303,16 @@ function renderCharts(totals, domains) {
 
 function renderDomains(domains) {
   const html = domains.map(d => {
-    const cfg      = STATUS_CFG[d.status] || STATUS_CFG.queued;
-    const chipCls  = cfg.chipCls;
-    const chipTip  = CHIP_TITLE[chipCls] || '';
+    const cfg        = STATUS_CFG[d.status] || STATUS_CFG.stalled;
+    const queuedSet  = new Set(d.queued_years || []);
 
-    const pendingChips = d.pending_years.map(y =>
-      `<span class="year-chip ${chipCls}" title="${chipTip}"
-             onclick="requeueYear('${d.name}',[${y}],this)">${y}</span>`
-    ).join('');
+    const pendingChips = d.pending_years.map(y => {
+      const inQueue = queuedSet.has(y);
+      const cls     = inQueue ? 'year-queued'  : 'year-stalled';
+      const tip     = inQueue ? CHIP_TITLE['year-queued'] : CHIP_TITLE['year-stalled'];
+      return `<span class="year-chip ${cls}" title="${tip}"
+               onclick="requeueYear('${d.name}',[${y}],this)">${y}</span>`;
+    }).join('');
 
     const doneChips = d.done_years.slice(-5).map(y =>
       `<span class="year-chip year-done">${y}</span>`).join('');

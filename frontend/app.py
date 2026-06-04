@@ -165,8 +165,15 @@ def api_stats():
                     })
 
             done_files    = [f for f in files if f["is_done"]]
+            pending_files = [f for f in files if not f["is_done"]]
             done_years    = sorted(f["year"] for f in done_files)
             pending_years = [y for y in EXPECTED_YEARS if y not in set(done_years)]
+
+            # Years whose placeholder was touched recently = probably in SQS queue
+            queued_years = sorted(
+                f["year"] for f in pending_files
+                if (now - datetime.fromisoformat(f["last_modified"])).total_seconds() < 1800  # 30 min
+            )
 
             all_dates  = [f["last_modified"] for f in files]
             done_dates = [f["last_modified"] for f in done_files]
@@ -204,6 +211,7 @@ def api_stats():
                 "total":          len(EXPECTED_YEARS),
                 "pct":            round(len(done_files) / len(EXPECTED_YEARS) * 100),
                 "pending_years":  pending_years,
+                "queued_years":   queued_years,
                 "done_years":     done_years,
                 "size_bytes":     domain_size,
                 "avg_size_bytes": avg_size,
