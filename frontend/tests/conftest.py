@@ -47,7 +47,7 @@ def app(aws_setup):
     """Create and configure a new app instance for each test."""
     # We import inside the fixture to ensure 'moto' mocks are active
     # before the global boto3.resource() calls inside the modules run
-    from app_lambda import app
+    from app import app
     app.config.update({
         "TESTING": True,
         "WTF_CSRF_ENABLED": False
