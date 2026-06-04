@@ -63,13 +63,11 @@ app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 handler = Mangum(WsgiToAsgi(app), lifespan="off")
 
-#diable cache for a better experience
 @app.after_request
 def add_header(r):
     r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     r.headers["Pragma"] = "no-cache"
     r.headers["Expires"] = "0"
-    r.headers['Cache-Control'] = 'public, max-age=0'
     return r
 
 def get_cache():
@@ -442,7 +440,8 @@ def get_domain(domain):
             s3_screenshots_obj = [item.name for item in S3Path(f'/websiteovertime/screenshots/{domain}').iterdir() if not item.is_dir()]        
             screenshots_data = [(f[-8:-4], f) for f in s3_screenshots_obj]
             
-        screenshots = [(index, int(tup[0]), tup[1], random.randint(1,100000)) for (index, tup) in enumerate(sorted(screenshots_data))]
+        bust = int(time.time())
+        screenshots = [(index, int(tup[0]), tup[1], bust) for (index, tup) in enumerate(sorted(screenshots_data))]
     except Exception:
         screenshots = []
         
@@ -456,7 +455,13 @@ def serve_screenshot(domain, filename):
         screenshots_dir = os.path.join(base_dir, 'screenshots', domain)
         return send_from_directory(screenshots_dir, filename)
     else:
-        return redirect(f"https://websiteovertime.s3.amazonaws.com/screenshots/{domain}/{filename}")
+        # Pass the cache-buster param through so the browser never serves
+        # a stale placeholder from its cache when the real screenshot arrives.
+        r = request.args.get('r', '')
+        qs = f"?r={r}" if r else ""
+        resp = redirect(f"https://websiteovertime.s3.amazonaws.com/screenshots/{domain}/{filename}{qs}")
+        resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        return resp
 
 # call the program in a safe way
 if __name__ == '__main__':
