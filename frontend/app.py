@@ -265,6 +265,38 @@ def api_stats():
         "refreshed_at": datetime.now(timezone.utc).isoformat(),
     })
 
+
+@app.route("/api/requeue", methods=["POST"])
+def api_requeue():
+    data   = request.get_json()
+    domain = (data.get("domain") or "").strip()
+    years  = data.get("years") or []
+
+    if not domain or not years:
+        return jsonify({"error": "domain and years required"}), 400
+
+    sqs_queue = sqs.get_queue_by_name(QueueName=f"{prefix}websiteovertime-getscreenshot.fifo")
+    queued = []
+    for year in years:
+        key = f"screenshots/{domain}/{domain}_{year}.png"
+        s3.Object("websiteovertime", key).copy_from(
+            CopySource="websiteovertime/screenshots/websiteovertime-working.png"
+        )
+        sqs_queue.send_message(
+            MessageGroupId="WebSiteOverTime",
+            MessageDeduplicationId=str(uuid.uuid4()),
+            MessageAttributes={
+                "Title":  {"DataType": "String", "StringValue": "Request new screenshot"},
+                "Domain": {"DataType": "String", "StringValue": domain},
+                "Path":   {"DataType": "String", "StringValue": key},
+                "Year":   {"DataType": "String", "StringValue": str(year)},
+            },
+            MessageBody=f"http://{domain}"
+        )
+        queued.append(year)
+
+    return jsonify({"queued": queued, "count": len(queued)})
+
 #domain route...just the same search box, a list of hashtags of previous crawllings and....the screenshots of this century
 @app.route("/<domain>", methods=["GET", "POST"])
 def get_domain(domain):

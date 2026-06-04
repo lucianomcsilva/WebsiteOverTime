@@ -13,7 +13,11 @@
     border-radius: 3px; margin: 1px; font-family: monospace;
   }
   .year-done    { background: #d1fae5; color: #065f46; }
-  .year-pending { background: #fee2e2; color: #991b1b; }
+  .year-queued  { background: #fef9c3; color: #854d0e; cursor: pointer; border: 1px solid #fde68a; }
+  .year-queued:hover  { background: #fde68a; }
+  .year-stalled { background: #fee2e2; color: #991b1b; cursor: pointer; border: 1px solid #fca5a5; }
+  .year-stalled:hover { background: #fca5a5; }
+  .year-chip[data-loading] { opacity: .4; pointer-events: none; }
 
   .status-badge { font-size: .7rem; padding: 3px 8px; border-radius: 20px; font-weight: 600; }
   .status-done    { background: #d1fae5; color: #065f46; }
@@ -164,10 +168,16 @@ function fmtDateFull(iso) {
 }
 
 const STATUS_CFG = {
-  done:    { label: '✅ Done',    cls: 'status-done',    bar: '#10b981' },
-  active:  { label: '⚡ Active',  cls: 'status-active',  bar: '#3b82f6' },
-  stalled: { label: '⚠ Stalled', cls: 'status-stalled', bar: '#f59e0b' },
-  queued:  { label: '⏳ Queued',  cls: 'status-queued',  bar: '#9ca3af' },
+  done:    { label: '✅ Done',    cls: 'status-done',    bar: '#10b981', chipCls: '' },
+  active:  { label: '⚡ Active',  cls: 'status-active',  bar: '#3b82f6', chipCls: 'year-queued'  },
+  stalled: { label: '⚠️ Stalled', cls: 'status-stalled', bar: '#f59e0b', chipCls: 'year-stalled' },
+  queued:  { label: '⏳ Queued',  cls: 'status-queued',  bar: '#9ca3af', chipCls: 'year-queued'  },
+};
+
+// Tooltip text per chip class
+const CHIP_TITLE = {
+  'year-queued':  'Em fila / sendo processado — clique para re-enfileirar',
+  'year-stalled': 'Travado, não está na fila — clique para re-enfileirar',
 };
 
 // ── Overview cards ─────────────────────────────────────────────────────────
@@ -253,15 +263,26 @@ function renderCharts(totals, domains) {
 
 function renderDomains(domains) {
   const html = domains.map(d => {
-    const cfg  = STATUS_CFG[d.status] || STATUS_CFG.queued;
-    const pBar = d.status === 'done' ? '#10b981' : d.status === 'active' ? '#3b82f6' : d.status === 'stalled' ? '#f59e0b' : '#9ca3af';
+    const cfg      = STATUS_CFG[d.status] || STATUS_CFG.queued;
+    const chipCls  = cfg.chipCls;
+    const chipTip  = CHIP_TITLE[chipCls] || '';
 
     const pendingChips = d.pending_years.map(y =>
-      `<span class="year-chip year-pending">${y}</span>`).join('');
+      `<span class="year-chip ${chipCls}" title="${chipTip}"
+             onclick="requeueYear('${d.name}',[${y}],this)">${y}</span>`
+    ).join('');
+
     const doneChips = d.done_years.slice(-5).map(y =>
       `<span class="year-chip year-done">${y}</span>`).join('');
     const moreLabel = d.done_years.length > 5
       ? `<span class="year-chip year-done">+${d.done_years.length-5} more</span>` : '';
+
+    const requeueAllBtn = d.pending_years.length > 0 ? `
+      <button class="btn btn-xs btn-outline-warning mt-2 w-100"
+              style="font-size:.72rem;padding:2px 6px"
+              onclick="requeueYear('${d.name}',${JSON.stringify(d.pending_years)},this)">
+        ↻ Re-queue all ${d.pending_years.length} pending
+      </button>` : '';
 
     return `
     <div class="col-md-6 col-xl-4">
@@ -276,7 +297,7 @@ function renderDomains(domains) {
             <small class="fw-semibold">${d.pct}%</small>
           </div>
           <div class="progress mb-3">
-            <div class="progress-bar" style="width:${d.pct}%;background:${pBar}"></div>
+            <div class="progress-bar" style="width:${d.pct}%;background:${cfg.bar}"></div>
           </div>
           <div class="row g-1 text-center mb-2" style="font-size:.75rem">
             <div class="col-4">
@@ -292,10 +313,12 @@ function renderDomains(domains) {
               <div class="fw-semibold">${fmtEta(d.eta_seconds)}</div>
             </div>
           </div>
-          ${d.pending_years.length ? `
-          <div class="mb-1"><small class="text-muted">Pending years: </small>${pendingChips}</div>` : ''}
+          ${d.pending_years.length ? `<div class="mb-1">
+            <small class="text-muted">Pending: </small>${pendingChips}
+          </div>` : ''}
           <div><small class="text-muted">Recent done: </small>${doneChips}${moreLabel}</div>
-          ${d.last_activity ? `<div class="mt-1"><small class="text-muted">Last activity: ${fmtDate(d.last_activity)}</small></div>` : ''}
+          ${d.last_activity ? `<div class="mt-1"><small class="text-muted">Last: ${fmtDate(d.last_activity)}</small></div>` : ''}
+          ${requeueAllBtn}
         </div>
       </div>
     </div>`;
@@ -376,6 +399,38 @@ function renderNerdTable(domains) {
     </tr>`;
   }).join('');
   document.getElementById('nerd-tbody').innerHTML = rows || '<tr><td colspan="11" class="text-muted text-center">No data</td></tr>';
+}
+
+// ── Re-queue ────────────────────────────────────────────────────────────────
+
+async function requeueYear(domain, years, el) {
+  const isArray = Array.isArray(years);
+  const label   = el.textContent;
+  el.setAttribute('data-loading', '1');
+  if (isArray && years.length > 1) { el.textContent = `⏳ Queuing ${years.length}…`; el.disabled = true; }
+
+  try {
+    const res  = await fetch('/api/requeue', {
+      method:  'POST',
+      headers: {'Content-Type': 'application/json'},
+      body:    JSON.stringify({ domain, years: isArray ? years : [years] })
+    });
+    const data = await res.json();
+
+    if (isArray && years.length > 1) {
+      el.textContent = `✅ ${data.count} enfileirado(s)`;
+      el.classList.replace('btn-outline-warning', 'btn-outline-success');
+      setTimeout(() => { el.textContent = label; el.classList.replace('btn-outline-success','btn-outline-warning'); el.disabled = false; }, 3000);
+    } else {
+      // single chip: turn yellow to show it's now queued
+      el.classList.remove('year-stalled');
+      el.classList.add('year-queued');
+      el.title = CHIP_TITLE['year-queued'];
+    }
+  } catch(e) {
+    if (isArray && years.length > 1) { el.textContent = '❌ Erro'; el.disabled = false; }
+  }
+  el.removeAttribute('data-loading');
 }
 
 // ── Countdown ───────────────────────────────────────────────────────────────
