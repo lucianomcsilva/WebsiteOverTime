@@ -1,78 +1,418 @@
 {% extends "layout.html" %}
-
 {% block main %}
-<div class="container mt-4">
-    <h2><i class="fas fa-server"></i> SQS Queue Monitor</h2>
-    <p class="text-muted">Real-time AWS Simple Queue Service status.</p>
+<style>
+  .stat-card { border: none; box-shadow: 0 1px 4px rgba(0,0,0,.1); transition: transform .15s; }
+  .stat-card:hover { transform: translateY(-2px); }
+  .stat-number { font-size: 2rem; font-weight: 700; line-height: 1; }
+  .stat-label  { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: #6c757d; }
 
-    <div class="row mt-4">
-        {% for queue in queues %}
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-dark text-white">
-                    <strong>{{ queue.name }}</strong>
-                </div>
-                <div class="card-body">
-                    {% if queue.error %}
-                    <div class="alert alert-danger">
-                        Error communicating with AWS: {{ queue.error }}
-                    </div>
-                    {% else %}
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="fs-5">Messages Available <br><small class="text-muted">(Waiting to be
-                                processed)</small></span>
-                        <span class="badge bg-primary rounded-pill fs-4">{{ queue.visible }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="fs-5">Messages In Flight <br><small class="text-muted">(Currently being
-                                processed)</small></span>
-                        <span class="badge bg-warning text-dark rounded-pill fs-4">{{ queue.in_flight }}</span>
-                    </div>
-                    {% endif %}
+  .domain-card { border: none; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .domain-card .progress { height: 10px; border-radius: 6px; }
+  .year-chip {
+    display: inline-block; font-size: .65rem; padding: 1px 5px;
+    border-radius: 3px; margin: 1px; font-family: monospace;
+  }
+  .year-done    { background: #d1fae5; color: #065f46; }
+  .year-pending { background: #fee2e2; color: #991b1b; }
 
-                    {% if queue.messages and queue.messages|length > 0 %}
-                    <hr>
-                    <h6 class="text-muted mb-3"><i class="fas fa-eye"></i> Peeking at top messages:</h6>
-                    <div class="list-group list-group-flush">
-                        {% for msg in queue.messages %}
-                        <div class="list-group-item px-0 py-2">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1 text-truncate" style="max-width: 70%;" title="{{ msg.title }}">{{
-                                    msg.title }}</h6>
-                                <small class="text-muted">Ano: {{ msg.year if msg.year else '---' }}</small>
-                            </div>
-                            <small class="mb-1 text-break"
-                                style="font-family: monospace; background-color: #f8f9fa; padding: 2px 4px; border-radius: 3px;">{{
-                                msg.body }}</small>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% elif not queue.error and queue.visible|int > 0 %}
-                    <hr>
-                    <div class="text-center text-muted small">
-                        <i class="fas fa-lock"></i> Messages are currently in-flight or locked.
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
+  .status-badge { font-size: .7rem; padding: 3px 8px; border-radius: 20px; font-weight: 600; }
+  .status-done    { background: #d1fae5; color: #065f46; }
+  .status-active  { background: #dbeafe; color: #1e40af; animation: pulse 2s infinite; }
+  .status-stalled { background: #fef3c7; color: #92400e; }
+  .status-queued  { background: #f3f4f6; color: #374151; }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.6} }
+
+  .queue-card  { border: none; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .msg-row     { font-family: monospace; font-size: .78rem; background: #f8f9fa; border-radius: 4px; padding: 4px 8px; margin-bottom: 4px; }
+
+  .nerd-table  { font-size: .8rem; }
+  .nerd-table th { font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: #6c757d; }
+
+  #countdown { font-size: .75rem; }
+  .chart-container { position: relative; }
+</style>
+
+<div class="container-fluid mt-3 px-4">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="mb-0">📡 Monitor Dashboard</h4>
+      <small class="text-muted" id="refresh-time">Loading…</small>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-secondary" id="countdown">--</span>
+      <button class="btn btn-sm btn-outline-primary" onclick="loadStats()">↻ Refresh</button>
+    </div>
+  </div>
+
+  <!-- ── Overview cards ─────────────────────────────────────────────────── -->
+  <div class="row g-3 mb-4" id="overview-cards">
+    <div class="col text-center text-muted py-4">Loading stats…</div>
+  </div>
+
+  <!-- ── Charts ─────────────────────────────────────────────────────────── -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card stat-card h-100">
+        <div class="card-header fw-semibold">Overall Progress</div>
+        <div class="card-body d-flex flex-column align-items-center justify-content-center">
+          <div class="chart-container" style="width:200px;height:200px">
+            <canvas id="donutChart"></canvas>
+          </div>
+          <div class="mt-2 text-center">
+            <span class="stat-number text-primary" id="pct-label">–</span><span class="text-muted">%</span>
+            <div class="stat-label">complete</div>
+          </div>
         </div>
-        {% endfor %}
+      </div>
     </div>
+    <div class="col-md-9">
+      <div class="card stat-card h-100">
+        <div class="card-header fw-semibold">Completion by Domain</div>
+        <div class="card-body">
+          <canvas id="barChart" height="120"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <div class="text-center mt-4">
-        <button onclick="window.location.reload();" class="btn btn-outline-primary btn-lg">
-            <i class="fas fa-sync"></i> Refresh Status
-        </button>
+  <!-- ── Domain progress cards ──────────────────────────────────────────── -->
+  <h5 class="mb-3">Domain Status</h5>
+  <div class="row g-3 mb-4" id="domain-cards">
+    <div class="col text-muted">Loading…</div>
+  </div>
+
+  <!-- ── Queue section ──────────────────────────────────────────────────── -->
+  <h5 class="mb-3">Queue Status</h5>
+  <div class="row g-3 mb-4" id="queue-section">
+    <div class="col text-muted">Loading…</div>
+  </div>
+
+  <!-- ── Nerd stats table ───────────────────────────────────────────────── -->
+  <h5 class="mb-3">📊 Nerd Stats</h5>
+  <div class="card stat-card mb-5">
+    <div class="table-responsive">
+      <table class="table table-sm table-hover nerd-table mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Domain</th>
+            <th>Status</th>
+            <th>Done</th>
+            <th>Progress</th>
+            <th>Total Size</th>
+            <th>Avg/Screenshot</th>
+            <th>Rate (ss/min)</th>
+            <th>ETA</th>
+            <th>Started</th>
+            <th>Last Activity</th>
+            <th>Elapsed</th>
+          </tr>
+        </thead>
+        <tbody id="nerd-tbody">
+          <tr><td colspan="11" class="text-muted text-center py-3">Loading…</td></tr>
+        </tbody>
+      </table>
     </div>
+  </div>
+
 </div>
 
-<style>
-    .card {
-        transition: transform 0.2s;
-    }
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+let donutChart = null;
+let barChart   = null;
+let cdInterval = null;
+let cdSeconds  = 20;
 
-    .card:hover {
-        transform: translateY(-5px);
-    }
-</style>
+// ── Formatters ──────────────────────────────────────────────────────────────
+
+function fmtBytes(b) {
+  if (!b) return '—';
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(2) + ' MB';
+}
+
+function fmtElapsed(s) {
+  if (!s || s < 0) return '—';
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${sec}s`;
+  return `${sec}s`;
+}
+
+function fmtEta(s) {
+  if (s === null || s === undefined) return '—';
+  if (s <= 0) return '✅ Done';
+  if (s < 60) return '< 1 min';
+  return fmtElapsed(s) + ' left';
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+}
+
+function fmtDateFull(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit'})
+       + ' ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+}
+
+const STATUS_CFG = {
+  done:    { label: '✅ Done',    cls: 'status-done',    bar: '#10b981' },
+  active:  { label: '⚡ Active',  cls: 'status-active',  bar: '#3b82f6' },
+  stalled: { label: '⚠ Stalled', cls: 'status-stalled', bar: '#f59e0b' },
+  queued:  { label: '⏳ Queued',  cls: 'status-queued',  bar: '#9ca3af' },
+};
+
+// ── Overview cards ─────────────────────────────────────────────────────────
+
+function renderOverview(t) {
+  const cards = [
+    { icon:'🗂',  label:'Domains',     value: t.domains,                 color:'text-primary' },
+    { icon:'📷',  label:'Expected',    value: t.expected,                color:'text-secondary' },
+    { icon:'✅',  label:'Completed',   value: t.completed,               color:'text-success' },
+    { icon:'⏳',  label:'Pending',     value: t.pending,                 color:'text-warning' },
+    { icon:'💾',  label:'Total Size',  value: fmtBytes(t.size_bytes),    color:'text-info' },
+  ];
+  document.getElementById('overview-cards').innerHTML = cards.map(c => `
+    <div class="col">
+      <div class="card stat-card text-center py-3">
+        <div class="fs-2">${c.icon}</div>
+        <div class="stat-number ${c.color}">${c.value}</div>
+        <div class="stat-label">${c.label}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── Charts ─────────────────────────────────────────────────────────────────
+
+function renderCharts(totals, domains) {
+  document.getElementById('pct-label').textContent = totals.pct;
+
+  // Donut
+  const donutData = {
+    labels: ['Completed', 'Pending'],
+    datasets: [{
+      data: [totals.completed, totals.pending],
+      backgroundColor: ['#10b981', '#e5e7eb'],
+      borderWidth: 0,
+    }]
+  };
+  if (donutChart) {
+    donutChart.data = donutData;
+    donutChart.update();
+  } else {
+    donutChart = new Chart(document.getElementById('donutChart'), {
+      type: 'doughnut',
+      data: donutData,
+      options: { cutout: '72%', plugins: { legend: { display: false } }, animation: { duration: 500 } }
+    });
+  }
+
+  // Horizontal bar
+  const sorted   = [...domains].sort((a,b) => b.pct - a.pct);
+  const labels   = sorted.map(d => d.name);
+  const values   = sorted.map(d => d.pct);
+  const colors   = sorted.map(d => STATUS_CFG[d.status]?.bar || '#9ca3af');
+  const barData  = {
+    labels,
+    datasets: [{
+      label: '% done',
+      data: values,
+      backgroundColor: colors,
+      borderRadius: 4,
+    }]
+  };
+  if (barChart) {
+    barChart.data = barData;
+    barChart.update();
+  } else {
+    barChart = new Chart(document.getElementById('barChart'), {
+      type: 'bar',
+      data: barData,
+      options: {
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { min: 0, max: 100, ticks: { callback: v => v + '%' } },
+          y: { ticks: { font: { size: 11 } } }
+        },
+        animation: { duration: 400 }
+      }
+    });
+  }
+}
+
+// ── Domain cards ───────────────────────────────────────────────────────────
+
+function renderDomains(domains) {
+  const html = domains.map(d => {
+    const cfg  = STATUS_CFG[d.status] || STATUS_CFG.queued;
+    const pBar = d.status === 'done' ? '#10b981' : d.status === 'active' ? '#3b82f6' : d.status === 'stalled' ? '#f59e0b' : '#9ca3af';
+
+    const pendingChips = d.pending_years.map(y =>
+      `<span class="year-chip year-pending">${y}</span>`).join('');
+    const doneChips = d.done_years.slice(-5).map(y =>
+      `<span class="year-chip year-done">${y}</span>`).join('');
+    const moreLabel = d.done_years.length > 5
+      ? `<span class="year-chip year-done">+${d.done_years.length-5} more</span>` : '';
+
+    return `
+    <div class="col-md-6 col-xl-4">
+      <div class="card domain-card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="fw-semibold" style="font-size:.9rem">${d.name}</span>
+            <span class="status-badge ${cfg.cls}">${cfg.label}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-1">
+            <small class="text-muted">${d.completed} / ${d.total} screenshots</small>
+            <small class="fw-semibold">${d.pct}%</small>
+          </div>
+          <div class="progress mb-3">
+            <div class="progress-bar" style="width:${d.pct}%;background:${pBar}"></div>
+          </div>
+          <div class="row g-1 text-center mb-2" style="font-size:.75rem">
+            <div class="col-4">
+              <div class="text-muted">Avg size</div>
+              <div class="fw-semibold">${fmtBytes(d.avg_size_bytes)}</div>
+            </div>
+            <div class="col-4">
+              <div class="text-muted">Rate</div>
+              <div class="fw-semibold">${d.rate_per_min > 0 ? d.rate_per_min + '/min' : '—'}</div>
+            </div>
+            <div class="col-4">
+              <div class="text-muted">ETA</div>
+              <div class="fw-semibold">${fmtEta(d.eta_seconds)}</div>
+            </div>
+          </div>
+          ${d.pending_years.length ? `
+          <div class="mb-1"><small class="text-muted">Pending years: </small>${pendingChips}</div>` : ''}
+          <div><small class="text-muted">Recent done: </small>${doneChips}${moreLabel}</div>
+          ${d.last_activity ? `<div class="mt-1"><small class="text-muted">Last activity: ${fmtDate(d.last_activity)}</small></div>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('domain-cards').innerHTML = html || '<div class="col text-muted">No domains found.</div>';
+}
+
+// ── Queue cards ─────────────────────────────────────────────────────────────
+
+function renderQueues(queues) {
+  const html = queues.map(q => {
+    if (q.error) return `
+      <div class="col-md-6">
+        <div class="card queue-card border-danger">
+          <div class="card-header text-danger fw-semibold">${q.name}</div>
+          <div class="card-body text-danger small">${q.error}</div>
+        </div>
+      </div>`;
+
+    const totalQ = q.visible + q.in_flight;
+    const msgs = (q.messages || []).map(m => `
+      <div class="msg-row">
+        <span class="badge bg-secondary me-1">${m.year || '–'}</span>
+        <span class="text-primary">${m.domain || m.body}</span>
+        ${m.retries > 0 ? `<span class="badge bg-warning text-dark ms-1">retry ${m.retries}</span>` : ''}
+        ${m.sent_at ? `<span class="text-muted ms-2" style="font-size:.7rem">${fmtDate(m.sent_at)}</span>` : ''}
+      </div>`).join('');
+
+    const shortName = q.name.includes('getscreenshot') ? '📷 getscreenshot' : '🔗 geturl';
+
+    return `
+    <div class="col-md-6">
+      <div class="card queue-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span class="fw-semibold">${shortName}.fifo</span>
+          <span class="badge ${totalQ > 0 ? 'bg-primary' : 'bg-secondary'}">${totalQ} msgs</span>
+        </div>
+        <div class="card-body pb-2">
+          <div class="row g-2 mb-3 text-center">
+            <div class="col-6">
+              <div class="stat-label">Waiting</div>
+              <div class="fs-3 fw-bold text-primary">${q.visible}</div>
+            </div>
+            <div class="col-6">
+              <div class="stat-label">In-flight</div>
+              <div class="fs-3 fw-bold text-warning">${q.in_flight}</div>
+            </div>
+          </div>
+          ${msgs ? `<div class="small text-muted mb-1">Peeking (top ${q.messages.length}):</div>${msgs}` : '<div class="small text-muted">Queue empty ✓</div>'}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('queue-section').innerHTML = html;
+}
+
+// ── Nerd table ──────────────────────────────────────────────────────────────
+
+function renderNerdTable(domains) {
+  const rows = domains.map(d => {
+    const cfg = STATUS_CFG[d.status] || STATUS_CFG.queued;
+    return `<tr>
+      <td class="fw-semibold">${d.name}</td>
+      <td><span class="status-badge ${cfg.cls}">${cfg.label}</span></td>
+      <td>${d.completed} / ${d.total}</td>
+      <td>
+        <div class="progress" style="height:6px;width:80px">
+          <div class="progress-bar" style="width:${d.pct}%;background:${STATUS_CFG[d.status]?.bar}"></div>
+        </div>
+      </td>
+      <td>${fmtBytes(d.size_bytes)}</td>
+      <td>${fmtBytes(d.avg_size_bytes)}</td>
+      <td>${d.rate_per_min > 0 ? d.rate_per_min : '—'}</td>
+      <td>${fmtEta(d.eta_seconds)}</td>
+      <td>${fmtDateFull(d.first_seen)}</td>
+      <td>${fmtDate(d.last_activity)}</td>
+      <td>${fmtElapsed(d.elapsed_seconds)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('nerd-tbody').innerHTML = rows || '<tr><td colspan="11" class="text-muted text-center">No data</td></tr>';
+}
+
+// ── Countdown ───────────────────────────────────────────────────────────────
+
+function startCountdown() {
+  cdSeconds = 20;
+  clearInterval(cdInterval);
+  cdInterval = setInterval(() => {
+    cdSeconds--;
+    document.getElementById('countdown').textContent = `↻ ${cdSeconds}s`;
+    if (cdSeconds <= 0) loadStats();
+  }, 1000);
+}
+
+// ── Main loader ─────────────────────────────────────────────────────────────
+
+async function loadStats() {
+  document.getElementById('countdown').textContent = '⏳';
+  try {
+    const res  = await fetch('/api/stats');
+    const data = await res.json();
+
+    renderOverview(data.totals);
+    renderCharts(data.totals, data.domains);
+    renderDomains(data.domains);
+    renderQueues(data.queues);
+    renderNerdTable(data.domains);
+
+    const ts = new Date(data.refreshed_at);
+    document.getElementById('refresh-time').textContent =
+      'Last refresh: ' + ts.toLocaleTimeString('pt-BR');
+  } catch(e) {
+    document.getElementById('refresh-time').textContent = 'Error loading stats — ' + e.message;
+  }
+  startCountdown();
+}
+
+loadStats();
+</script>
 {% endblock %}

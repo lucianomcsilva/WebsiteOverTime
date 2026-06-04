@@ -8,7 +8,7 @@ import random
 import shutil
 from urllib.parse import urlparse
 
-from flask import Flask, redirect, render_template, request, send_from_directory
+from flask import Flask, jsonify, redirect, render_template, request, send_from_directory
 from asgiref.wsgi import WsgiToAsgi
 from mangum import Mangum
 from s3path import S3Path
@@ -114,65 +114,156 @@ def index():
 
 @app.route("/monitor", methods=["GET"])
 def monitor():
-    sqs_client = boto3.client("sqs")
-    
-    queues_info = []
-    queue_names = [
-        f"{prefix}websiteovertime-geturl.fifo",
-        f"{prefix}websiteovertime-getscreenshot.fifo"
-    ]
-    
-    for q_name in queue_names:
+    cache = get_cache()
+    return render_template("monitor.html", cache=cache)
+
+
+@app.route("/api/stats")
+def api_stats():
+    from datetime import datetime, timezone
+
+    PLACEHOLDER_SIZE = 492924
+    EXPECTED_YEARS   = list(range(2000, 2027))
+    s3_client        = boto3.client("s3")
+    sqs_client       = boto3.client("sqs")
+
+    # ── S3 domain stats ──────────────────────────────────────────────────────
+    domains_data    = []
+    total_completed = 0
+    total_size      = 0
+
+    try:
+        domain_names = sorted([
+            item.name for item in S3Path("/websiteovertime/screenshots/").iterdir()
+            if item.is_dir()
+        ])
+    except Exception:
+        domain_names = []
+
+    for domain in domain_names:
         try:
-            url = sqs_client.get_queue_url(QueueName=q_name)['QueueUrl']
-            attrs = sqs_client.get_queue_attributes(
-                QueueUrl=url,
-                AttributeNames=['ApproximateNumberOfMessages', 'ApproximateNumberOfMessagesNotVisible']
-            )['Attributes']
-            
-            # Peek at some messages without deleting them
-            peek_response = sqs_client.receive_message(
-                QueueUrl=url,
-                MaxNumberOfMessages=5,
-                VisibilityTimeout=5, # Hide from other consumers for just 5 seconds
-                WaitTimeSeconds=0,
-                MessageAttributeNames=['All']
-            )
-            
-            peeked_messages = []
-            if 'Messages' in peek_response:
-                for msg in peek_response['Messages']:
-                    title = 'No Title'
-                    year = ''
-                    if 'MessageAttributes' in msg:
-                        if 'Title' in msg['MessageAttributes']:
-                            title = msg['MessageAttributes']['Title']['StringValue']
-                        if 'Year' in msg['MessageAttributes']:
-                            year = msg['MessageAttributes']['Year']['StringValue']
-                        
-                    peeked_messages.append({
-                        'id': msg.get('MessageId', 'Unknown'),
-                        'body': msg.get('Body', ''),
-                        'title': title,
-                        'year': year
+            files = []
+            paginator = s3_client.get_paginator("list_objects_v2")
+            for page in paginator.paginate(Bucket="websiteovertime", Prefix=f"screenshots/{domain}/"):
+                for obj in page.get("Contents", []):
+                    filename  = obj["Key"].split("/")[-1]
+                    year_str  = filename[-8:-4]
+                    if not year_str.isdigit() or year_str == "0000":
+                        continue
+                    year = int(year_str)
+                    if not (2000 <= year <= 2026):
+                        continue
+                    files.append({
+                        "year":          year,
+                        "size_bytes":    obj["Size"],
+                        "last_modified": obj["LastModified"].isoformat(),
+                        "is_done":       obj["Size"] != PLACEHOLDER_SIZE,
                     })
 
-            queues_info.append({
-                'name': q_name,
-                'visible': attrs.get('ApproximateNumberOfMessages', '0'),
-                'in_flight': attrs.get('ApproximateNumberOfMessagesNotVisible', '0'),
-                'messages': peeked_messages
+            done_files    = [f for f in files if f["is_done"]]
+            done_years    = sorted(f["year"] for f in done_files)
+            pending_years = [y for y in EXPECTED_YEARS if y not in set(done_years)]
+
+            all_dates  = [f["last_modified"] for f in files]
+            done_dates = [f["last_modified"] for f in done_files]
+
+            first_seen    = min(all_dates)  if all_dates  else None
+            last_activity = max(done_dates) if done_dates else None
+
+            now = datetime.now(timezone.utc)
+            elapsed_seconds = 0
+            if first_seen:
+                elapsed_seconds = int((now - datetime.fromisoformat(first_seen)).total_seconds())
+
+            rate_per_min = round(len(done_files) / (elapsed_seconds / 60), 2) if elapsed_seconds > 60 and done_files else 0
+            eta_seconds  = int(len(pending_years) / rate_per_min * 60) if rate_per_min > 0 and pending_years else None
+
+            domain_size = sum(f["size_bytes"] for f in done_files)
+            avg_size    = domain_size // len(done_files) if done_files else 0
+
+            total_completed += len(done_files)
+            total_size      += domain_size
+
+            if not pending_years:
+                status = "done"
+            elif last_activity and (now - datetime.fromisoformat(last_activity)).total_seconds() < 600:
+                status = "active"
+            elif done_files:
+                status = "stalled"
+            else:
+                status = "queued"
+
+            domains_data.append({
+                "name":           domain,
+                "completed":      len(done_files),
+                "total":          len(EXPECTED_YEARS),
+                "pct":            round(len(done_files) / len(EXPECTED_YEARS) * 100),
+                "pending_years":  pending_years,
+                "done_years":     done_years,
+                "size_bytes":     domain_size,
+                "avg_size_bytes": avg_size,
+                "first_seen":     first_seen,
+                "last_activity":  last_activity,
+                "elapsed_seconds":elapsed_seconds,
+                "rate_per_min":   rate_per_min,
+                "eta_seconds":    eta_seconds,
+                "status":         status,
+            })
+        except Exception:
+            pass
+
+    # ── SQS queue stats ───────────────────────────────────────────────────────
+    queues_data = []
+    for q_name in [f"{prefix}websiteovertime-geturl.fifo", f"{prefix}websiteovertime-getscreenshot.fifo"]:
+        try:
+            q_url  = sqs_client.get_queue_url(QueueName=q_name)["QueueUrl"]
+            attrs  = sqs_client.get_queue_attributes(
+                QueueUrl=q_url,
+                AttributeNames=["ApproximateNumberOfMessages", "ApproximateNumberOfMessagesNotVisible"]
+            )["Attributes"]
+
+            peek = sqs_client.receive_message(
+                QueueUrl=q_url, MaxNumberOfMessages=5,
+                VisibilityTimeout=5, WaitTimeSeconds=0,
+                MessageAttributeNames=["All"], AttributeNames=["SentTimestamp"]
+            )
+
+            messages = []
+            for msg in peek.get("Messages", []):
+                ts  = int(msg.get("Attributes", {}).get("SentTimestamp", 0)) / 1000
+                ma  = msg.get("MessageAttributes", {})
+                messages.append({
+                    "body":     msg.get("Body", ""),
+                    "domain":   ma.get("Domain", {}).get("StringValue", ""),
+                    "year":     ma.get("Year",   {}).get("StringValue", ""),
+                    "retries":  ma.get("Retries",{}).get("StringValue", "0"),
+                    "sent_at":  datetime.fromtimestamp(ts, tz=timezone.utc).isoformat() if ts else None,
+                })
+
+            queues_data.append({
+                "name":      q_name,
+                "visible":   int(attrs.get("ApproximateNumberOfMessages", 0)),
+                "in_flight": int(attrs.get("ApproximateNumberOfMessagesNotVisible", 0)),
+                "messages":  messages,
             })
         except Exception as e:
-            queues_info.append({
-                'name': q_name,
-                'error': str(e)
-            })
+            queues_data.append({"name": q_name, "error": str(e)})
 
-    # Fetch cache for the sidebar
-    cache = get_cache()
-            
-    return render_template("monitor.html", queues=queues_info, cache=cache)
+    total_expected = len(domain_names) * len(EXPECTED_YEARS)
+
+    return jsonify({
+        "domains": domains_data,
+        "totals": {
+            "domains":     len(domain_names),
+            "expected":    total_expected,
+            "completed":   total_completed,
+            "pending":     total_expected - total_completed,
+            "size_bytes":  total_size,
+            "pct":         round(total_completed / total_expected * 100) if total_expected else 0,
+        },
+        "queues":       queues_data,
+        "refreshed_at": datetime.now(timezone.utc).isoformat(),
+    })
 
 #domain route...just the same search box, a list of hashtags of previous crawllings and....the screenshots of this century
 @app.route("/<domain>", methods=["GET", "POST"])
