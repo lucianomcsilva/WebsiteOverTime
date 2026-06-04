@@ -94,6 +94,47 @@
     <div class="col text-muted">Loading…</div>
   </div>
 
+  <!-- ── Activity + Cost ───────────────────────────────────────────────── -->
+  <h5 class="mb-3">📈 Atividade & Custo Estimado</h5>
+  <div class="row g-3 mb-4">
+    <!-- Activity chart -->
+    <div class="col-lg-8">
+      <div class="card stat-card h-100">
+        <div class="card-header fw-semibold">Screenshots processados por dia <small class="text-muted fw-normal">(últimos 30 dias • dados do S3)</small></div>
+        <div class="card-body">
+          <canvas id="activityChart" height="90"></canvas>
+        </div>
+      </div>
+    </div>
+    <!-- Cost breakdown -->
+    <div class="col-lg-4">
+      <div class="card stat-card h-100">
+        <div class="card-header fw-semibold">💰 Custo Estimado <small class="text-muted fw-normal">(acumulado)</small></div>
+        <div class="card-body p-0">
+          <table class="table table-sm mb-0" id="cost-table">
+            <thead class="table-light"><tr><th>Recurso</th><th class="text-end">Estimativa</th><th class="text-end">Free Tier</th></tr></thead>
+            <tbody id="cost-tbody"></tbody>
+            <tfoot id="cost-tfoot"></tfoot>
+          </table>
+          <div class="px-3 pb-3 mt-2">
+            <div class="small text-muted mb-1">Free Tier Lambda (invocações/mês)</div>
+            <div class="progress" style="height:8px">
+              <div class="progress-bar bg-success" id="ft-bar" style="width:0%"></div>
+            </div>
+            <div class="small text-muted mt-1" id="ft-label"></div>
+          </div>
+          <div class="px-3 pb-3">
+            <small class="text-muted" style="font-size:.68rem">
+              ⚠️ Estimativa baseada nos dados do S3 e nas configurações dos Lambdas.
+              Não inclui CloudWatch Logs, transferência de dados ou requests S3 GET.
+              Valores reais podem variar.
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Nerd stats table ───────────────────────────────────────────────── -->
   <h5 class="mb-3">📊 Nerd Stats</h5>
   <div class="card stat-card mb-5">
@@ -402,6 +443,147 @@ function renderNerdTable(domains) {
   document.getElementById('nerd-tbody').innerHTML = rows || '<tr><td colspan="11" class="text-muted text-center">No data</td></tr>';
 }
 
+// ── Activity chart ─────────────────────────────────────────────────────────
+
+let activityChart = null;
+
+function renderActivity(daily) {
+  const labels = daily.map(d => {
+    const [,m,day] = d.date.split('-');
+    return `${day}/${m}`;
+  });
+  const values = daily.map(d => d.count);
+  const maxVal = Math.max(...values, 1);
+
+  const barColors = values.map(v => v === 0 ? '#e5e7eb' : `rgba(59,130,246,${0.3 + 0.7 * v / maxVal})`);
+
+  const chartData = {
+    labels,
+    datasets: [{
+      label: 'Screenshots',
+      data: values,
+      backgroundColor: barColors,
+      borderRadius: 3,
+    }]
+  };
+
+  if (activityChart) {
+    activityChart.data = chartData;
+    activityChart.update();
+  } else {
+    activityChart = new Chart(document.getElementById('activityChart'), {
+      type: 'bar',
+      data: chartData,
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1 } },
+          x: { ticks: { font: { size: 10 }, maxRotation: 0 } }
+        },
+        animation: { duration: 400 }
+      }
+    });
+  }
+}
+
+// ── Cost estimate ──────────────────────────────────────────────────────────
+
+function renderCosts(totals, cfg) {
+  // ── Pricing constants (AWS us-east-1, Jun 2025) ──
+  const LAMBDA_REQ_PRICE   = 0.20  / 1_000_000;    // per invocation
+  const LAMBDA_GBS_PRICE   = 0.0000166667;          // per GB-second
+  const SQS_PRICE          = 0.40  / 1_000_000;    // per message (after 1M free)
+  const S3_GB_MONTH        = 0.023;                 // per GB/month
+  const S3_PUT_PER_K       = 0.005;                 // per 1000 PUTs
+  const FREE_REQS          = 1_000_000;
+  const FREE_GBS           = 400_000;
+  const FREE_SQS           = 1_000_000;
+
+  // ── Lambda: getscreenshot ──
+  // Each completed screenshot = ~1 invocation (+ ~20% retries estimate)
+  const ss_inv   = Math.ceil(totals.completed * 1.2);
+  const ss_gbs   = ss_inv * cfg.getscreenshot_avg_duration_s * (cfg.getscreenshot_mb / 1024);
+
+  // ── Lambda: geturl ──
+  // 1 invocation per domain
+  const url_inv  = totals.domains;
+  const url_gbs  = url_inv * cfg.geturl_avg_duration_s * (cfg.geturl_mb / 1024);
+
+  // ── Lambda: frontend ──
+  // We don't know page view count — show as unknown
+  const fe_note  = 'n/a (sem dados de page views)';
+
+  const total_inv = ss_inv + url_inv;
+  const total_gbs = ss_gbs + url_gbs;
+
+  const lambda_req_cost = Math.max(0, total_inv - FREE_REQS) * LAMBDA_REQ_PRICE;
+  const lambda_gbs_cost = Math.max(0, total_gbs - FREE_GBS) * LAMBDA_GBS_PRICE;
+  const lambda_cost     = lambda_req_cost + lambda_gbs_cost;
+
+  // ── SQS ──
+  // geturl sends 27 msgs/domain; getscreenshot receives same + rerequeus
+  const sqs_msgs = totals.domains * 27 + totals.completed;
+  const sqs_cost = Math.max(0, sqs_msgs - FREE_SQS) * SQS_PRICE;
+
+  // ── S3 ──
+  const s3_gb        = totals.size_bytes / (1024 ** 3);
+  const s3_store_cost = s3_gb * S3_GB_MONTH;
+  // PUTs: placeholder copies + real screenshot uploads
+  const s3_puts      = totals.expected + totals.completed;
+  const s3_put_cost  = s3_puts / 1000 * S3_PUT_PER_K;
+  const s3_cost      = s3_store_cost + s3_put_cost;
+
+  const total_cost = lambda_cost + sqs_cost + s3_cost;
+
+  const fmt$ = v => v < 0.001 ? '< $0.001' : '$' + v.toFixed(4);
+  const fmtFT = (used, free) => used >= free
+    ? `<span class="text-danger fw-semibold">Acima do free tier</span>`
+    : `<span class="text-success">✓ Free tier (${((used/free)*100).toFixed(1)}%)</span>`;
+
+  document.getElementById('cost-tbody').innerHTML = `
+    <tr><td colspan="3" class="table-secondary small fw-semibold ps-2">Lambda</td></tr>
+    <tr>
+      <td class="ps-3 small">getscreenshot<br><span class="text-muted" style="font-size:.68rem">~${ss_inv} inv × ${cfg.getscreenshot_avg_duration_s}s × ${cfg.getscreenshot_mb}MB</span></td>
+      <td class="text-end small">${fmt$(lambda_cost)}</td>
+      <td class="text-end small">${fmtFT(total_gbs, FREE_GBS)}</td>
+    </tr>
+    <tr>
+      <td class="ps-3 small">geturl<br><span class="text-muted" style="font-size:.68rem">${url_inv} inv × ${cfg.geturl_avg_duration_s}s × ${cfg.geturl_mb}MB</span></td>
+      <td class="text-end small text-muted">—</td>
+      <td class="text-end small">${fmtFT(total_inv, FREE_REQS)}</td>
+    </tr>
+    <tr>
+      <td class="ps-3 small">frontend<br><span class="text-muted" style="font-size:.68rem">${fe_note}</span></td>
+      <td class="text-end small text-muted">—</td>
+      <td class="text-end small text-muted">—</td>
+    </tr>
+    <tr><td colspan="3" class="table-secondary small fw-semibold ps-2">SQS</td></tr>
+    <tr>
+      <td class="ps-3 small">~${sqs_msgs.toLocaleString()} mensagens</td>
+      <td class="text-end small">${fmt$(sqs_cost)}</td>
+      <td class="text-end small">${fmtFT(sqs_msgs, FREE_SQS)}</td>
+    </tr>
+    <tr><td colspan="3" class="table-secondary small fw-semibold ps-2">S3</td></tr>
+    <tr>
+      <td class="ps-3 small">${(s3_gb*1024).toFixed(1)} MB storage + ${s3_puts} PUTs</td>
+      <td class="text-end small">${fmt$(s3_cost)}</td>
+      <td class="text-end small text-muted">sem free tier</td>
+    </tr>`;
+
+  document.getElementById('cost-tfoot').innerHTML = `
+    <tr class="table-dark">
+      <td class="fw-bold">TOTAL ESTIMADO</td>
+      <td class="text-end fw-bold" colspan="2">${fmt$(total_cost)}</td>
+    </tr>`;
+
+  // Free tier bar (GB-seconds)
+  const ftPct = Math.min(100, (total_gbs / FREE_GBS) * 100);
+  document.getElementById('ft-bar').style.width = ftPct + '%';
+  document.getElementById('ft-bar').className = 'progress-bar ' + (ftPct > 80 ? 'bg-danger' : ftPct > 50 ? 'bg-warning' : 'bg-success');
+  document.getElementById('ft-label').textContent =
+    `${total_gbs.toFixed(0)} / ${FREE_GBS.toLocaleString()} GB-s usados (${ftPct.toFixed(1)}%)`;
+}
+
 // ── Re-queue ────────────────────────────────────────────────────────────────
 
 async function requeueYear(domain, years, el) {
@@ -458,6 +640,8 @@ async function loadStats() {
     renderCharts(data.totals, data.domains);
     renderDomains(data.domains);
     renderQueues(data.queues);
+    renderActivity(data.daily_activity);
+    renderCosts(data.totals, data.lambda_config);
     renderNerdTable(data.domains);
 
     const ts = new Date(data.refreshed_at);

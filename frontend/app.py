@@ -140,6 +140,10 @@ def api_stats():
     except Exception:
         domain_names = []
 
+    from collections import defaultdict
+    from datetime import timedelta
+    daily_screenshots = defaultdict(int)   # "YYYY-MM-DD" → count
+
     for domain in domain_names:
         try:
             files = []
@@ -183,6 +187,9 @@ def api_stats():
 
             total_completed += len(done_files)
             total_size      += domain_size
+
+            for f in done_files:
+                daily_screenshots[f["last_modified"][:10]] += 1
 
             if not pending_years:
                 status = "done"
@@ -249,6 +256,13 @@ def api_stats():
 
     total_expected = len(domain_names) * len(EXPECTED_YEARS)
 
+    # ── Activity timeline (last 30 days, derived from S3 LastModified) ────────
+    today = datetime.now(timezone.utc).date()
+    daily_activity = [
+        {"date": str(today - timedelta(days=i)), "count": daily_screenshots.get(str(today - timedelta(days=i)), 0)}
+        for i in range(29, -1, -1)
+    ]
+
     return jsonify({
         "domains": domains_data,
         "totals": {
@@ -259,7 +273,16 @@ def api_stats():
             "size_bytes":  total_size,
             "pct":         round(total_completed / total_expected * 100) if total_expected else 0,
         },
-        "queues":       queues_data,
+        "queues":         queues_data,
+        "daily_activity": daily_activity,
+        # Memory config so frontend can calculate cost estimates
+        "lambda_config": {
+            "getscreenshot_mb": 1024,   # Chrome+Selenium needs ~1GB
+            "geturl_mb":        128,
+            "frontend_mb":      256,
+            "getscreenshot_avg_duration_s": 60,
+            "geturl_avg_duration_s":        3,
+        },
         "refreshed_at": datetime.now(timezone.utc).isoformat(),
     })
 
