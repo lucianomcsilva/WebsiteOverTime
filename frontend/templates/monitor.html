@@ -372,7 +372,42 @@ function renderDomains(domains) {
 
 // ── Queue cards ─────────────────────────────────────────────────────────────
 
-function renderQueues(queues) {
+function buildLogPanel(queueName, lambdaLogs) {
+  const key = queueName.includes('getscreenshot') ? 'getscreenshot' : 'geturl';
+  const logs = lambdaLogs?.[key];
+  if (!logs || logs.length === 0) return '';
+
+  const lines = logs.map(e => {
+    const t = new Date(e.ts);
+    const hms = t.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+
+    // colour-code log level
+    let cls = 'text-secondary';
+    const m = e.msg;
+    if (/error|exception|traceback|critical/i.test(m)) cls = 'text-danger';
+    else if (/warn/i.test(m))  cls = 'text-warning';
+    else if (/\[INFO\]|INFO/i.test(m))  cls = 'text-info';
+    else if (/saved|found|done|success|✓/i.test(m)) cls = 'text-success';
+
+    // strip Lambda internal prefix [INFO] 2026-... [req-id]  etc.
+    const clean = m.replace(/^\[\w+\]\s*[\d\-T:.Z]+\s*[\w\-]+\s*/,'').trim();
+    return `<div class="${cls}" style="font-size:.68rem;white-space:pre-wrap">`
+         + `<span class="text-muted me-1">${hms}</span>${clean}</div>`;
+  }).join('');
+
+  return `
+    <div class="card-footer p-0">
+      <div class="d-flex align-items-center px-2 py-1 bg-dark text-white" style="font-size:.7rem">
+        <span>📋 CloudWatch — últimas execuções</span>
+        <span class="ms-auto text-muted" style="font-size:.65rem">ao vivo</span>
+      </div>
+      <div class="p-2 bg-black text-monospace" style="max-height:180px;overflow-y:auto;font-family:monospace">
+        ${lines}
+      </div>
+    </div>`;
+}
+
+function renderQueues(queues, data_lambda_logs) {
   const html = queues.map(q => {
     if (q.error) return `
       <div class="col-md-6">
@@ -413,6 +448,7 @@ function renderQueues(queues) {
           </div>
           ${msgs ? `<div class="small text-muted mb-1">Peeking (top ${q.messages.length}):</div>${msgs}` : '<div class="small text-muted">Queue empty ✓</div>'}
         </div>
+        ${buildLogPanel(q.name, data_lambda_logs)}
       </div>
     </div>`;
   }).join('');
@@ -641,7 +677,7 @@ async function loadStats() {
     renderOverview(data.totals);
     renderCharts(data.totals, data.domains);
     renderDomains(data.domains);
-    renderQueues(data.queues);
+    renderQueues(data.queues, data.lambda_logs);
     renderActivity(data.daily_activity);
     renderCosts(data.totals, data.lambda_config);
     renderNerdTable(data.domains);

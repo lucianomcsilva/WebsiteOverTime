@@ -7,6 +7,33 @@ import datetime
 import random
 import shutil
 from urllib.parse import urlparse
+import tldextract as _tldex
+
+
+def normalize_domain(raw: str) -> str | None:
+    """
+    Normalize user input to a clean hostname, prepending www. only when
+    the input has no subdomain at all.
+
+    Examples:
+      google.com              → www.google.com
+      www.google.com          → www.google.com
+      developer.meugastos.com.br → developer.meugastos.com.br
+      meugastos.com.br        → www.meugastos.com.br
+    """
+    # strip protocol + trailing slashes
+    host = re.sub(r'https?://', '', raw.strip().lower()).rstrip('/')
+    # strip path/query if any
+    host = host.split('/')[0].split('?')[0]
+
+    ext = _tldex.extract(host)
+    if not ext.domain or not ext.suffix:
+        return None                         # not a valid domain
+
+    if ext.subdomain:
+        return f"{ext.subdomain}.{ext.domain}.{ext.suffix}"
+    else:
+        return f"www.{ext.domain}.{ext.suffix}"
 
 from flask import Flask, jsonify, redirect, render_template, request, send_from_directory
 from asgiref.wsgi import WsgiToAsgi
@@ -61,18 +88,12 @@ def get_cache():
 def index():
     cache = get_cache()
     if request.method == "POST":
-        #Sanitize HTTPs
-        url = request.form.get('url').strip().lower()
-        print(f" 1 - {url}")
-        if url.startswith('http'):
-            print("it starts")
-            url = re.sub(r'https?://', '', url) 
-            print(f" 2 - {url}")
-        url = "http://"+url
-        print(f" 3 - {url}")
-        domain = urlparse(url).netloc
-
-        print(f"Received {request.form.get('url')}, converted to {url} and domain extracted was {domain}")
+        raw_input = request.form.get('url', '').strip()
+        domain = normalize_domain(raw_input)
+        if not domain:
+            return render_template("home.html", cache=cache, error="URL inválida.")
+        url = f"http://{domain}"
+        print(f"Received '{raw_input}' → normalized to '{domain}'")
 
         if domain in cache:
             return redirect(f"/{url[7:]}")
@@ -225,6 +246,44 @@ def api_stats():
         except Exception:
             pass
 
+    # ── CloudWatch logs (last N lines per Lambda) ─────────────────────────────
+    LAMBDA_LOG_GROUPS = {
+        "getscreenshot": "/aws/lambda/wsot-sqs-get-screenshot-dev-wsotGetScreenshotFunction",
+        "geturl":        "/aws/lambda/websiteovertime-geturl-dev-geturl",
+    }
+    logs_client  = boto3.client("logs")
+    lambda_logs  = {}
+    for fn_key, log_group in LAMBDA_LOG_GROUPS.items():
+        try:
+            streams = logs_client.describe_log_streams(
+                logGroupName=log_group,
+                orderBy="LastEventTime",
+                descending=True,
+                limit=1,
+            )
+            if not streams["logStreams"]:
+                continue
+            stream_name = streams["logStreams"][0]["logStreamName"]
+            events = logs_client.get_log_events(
+                logGroupName=log_group,
+                logStreamName=stream_name,
+                limit=30,
+                startFromHead=False,
+            )
+            lambda_logs[fn_key] = [
+                {
+                    "ts":  e["timestamp"],
+                    "msg": e["message"].rstrip("\n"),
+                }
+                for e in events["events"]
+                if e["message"].strip() and
+                   not e["message"].startswith("START ") and
+                   not e["message"].startswith("END ") and
+                   not e["message"].startswith("REPORT ")
+            ][-20:]     # keep last 20 meaningful lines
+        except Exception:
+            lambda_logs[fn_key] = []
+
     # ── SQS queue stats ───────────────────────────────────────────────────────
     queues_data = []
     for q_name in [f"{prefix}websiteovertime-geturl.fifo", f"{prefix}websiteovertime-getscreenshot.fifo"]:
@@ -282,6 +341,7 @@ def api_stats():
             "pct":         round(total_completed / total_expected * 100) if total_expected else 0,
         },
         "queues":         queues_data,
+        "lambda_logs":    lambda_logs,
         "daily_activity": daily_activity,
         # Memory config so frontend can calculate cost estimates
         "lambda_config": {

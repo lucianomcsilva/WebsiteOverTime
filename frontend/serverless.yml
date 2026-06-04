@@ -20,6 +20,11 @@ provider:
           Resource: "arn:aws:sqs:us-east-1:*:websiteovertime-*.fifo"
         - Effect: Allow
           Action:
+            - logs:DescribeLogStreams
+            - logs:GetLogEvents
+          Resource: "arn:aws:logs:us-east-1:*:log-group:/aws/lambda/*:*"
+        - Effect: Allow
+          Action:
             - s3:GetObject
             - s3:PutObject
             - s3:ListBucket
@@ -30,17 +35,10 @@ provider:
 
 plugins:
   - serverless-python-requirements
-  - serverless-domain-manager
 
 custom:
   pythonRequirements:
     usePipenv: false
-  customDomain:
-    domainName: wsot.zeetha.com
-    basePath: ''
-    stage: ${self:provider.stage, 'dev'}
-    createRoute53Record: false
-    # certificateArn: <cole aqui o ARN do certificado ACM após criá-lo>
 
 functions:
   app:
