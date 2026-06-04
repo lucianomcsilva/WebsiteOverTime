@@ -19,9 +19,10 @@ class bcolors:
     BLINK = '\033[5m'
 
 
+prefix = 'local-' if os.environ.get('IS_LOCAL') == 'true' else ''
 sqs = boto3.resource("sqs")
 s3 = boto3.resource("s3")
-sqs_queue = sqs.get_queue_by_name(QueueName="websiteovertime-geturl.fifo")
+sqs_queue = sqs.get_queue_by_name(QueueName=f"{prefix}websiteovertime-geturl.fifo")
 
 # This methdod create a new directory in case 
 # the requested domain was already crawled, avoiding
@@ -60,12 +61,12 @@ def get_url(url):
     print(f"Domain for this request is {domain}")
     #path = create_dir(domain)
 
-    for year in range(2000, 2024):
+    for year in range(2000, 2027):
         #get_url_at_year(path, domain, year)      
         #shutil.copyfile("websiteovertime-working.png", f"{path}/{domain}_{year}.png")  
         s3.Object('websiteovertime', f"screenshots/{domain}/{domain}_{year}.png").copy_from(CopySource='websiteovertime/screenshots/websiteovertime-working.png')
 
-        sqs_send_queue = sqs.get_queue_by_name(QueueName="websiteovertime-getscreenshot.fifo")     
+        sqs_send_queue = sqs.get_queue_by_name(QueueName=f"{prefix}websiteovertime-getscreenshot.fifo")     
 
         response = sqs_send_queue.send_message(            
             MessageGroupId="WebSiteOverTime",

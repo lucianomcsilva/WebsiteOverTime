@@ -65,7 +65,7 @@ def get_url(url):
     print(f"Domain for this request is {bcolors.OKCYAN}{domain}{bcolors.ENDC}")
     path = create_dir(domain)
 
-    for year in range(2000, 2023):
+    for year in range(2000, 2027):
         #get_url_at_year(path, domain, year)      
         shutil.copyfile("websiteovertime-working.png", f"{path}/{domain}_{year}.png")  
         sqs_send_queue = sqs.get_queue_by_name(QueueName="websiteovertime-getscreenshot.fifo")     
