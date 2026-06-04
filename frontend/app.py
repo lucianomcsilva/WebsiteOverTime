@@ -9,6 +9,7 @@ import shutil
 from urllib.parse import urlparse
 
 from flask import Flask, redirect, render_template, request, send_from_directory
+from asgiref.wsgi import WsgiToAsgi
 from mangum import Mangum
 from s3path import S3Path
 import boto3
@@ -33,7 +34,7 @@ class bcolors:
 # Configure application
 app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
-handler = Mangum(app, lifespan="off")
+handler = Mangum(WsgiToAsgi(app), lifespan="off")
 
 #diable cache for a better experience
 @app.after_request
