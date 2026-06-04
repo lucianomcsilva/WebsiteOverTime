@@ -433,15 +433,29 @@ def get_domain(domain):
     try:
         if os.environ.get('IS_LOCAL') == 'true':
             screenshots_dir = os.path.join(base_dir, 'screenshots')
-            print(f"looking for domain at {screenshots_dir}/{domain}/")        
-            screenshots_data = [(f.name[-8:-4], f.name) for f in os.scandir(os.path.join(screenshots_dir, domain))]
+            print(f"looking for domain at {screenshots_dir}/{domain}/")
+            screenshots_data = [
+                (f.name[-8:-4], f.name, int(f.stat().st_mtime))
+                for f in os.scandir(os.path.join(screenshots_dir, domain))
+            ]
         else:
             print(f"looking for domain in S3 websiteovertime/screenshots/{domain}/")
-            s3_screenshots_obj = [item.name for item in S3Path(f'/websiteovertime/screenshots/{domain}').iterdir() if not item.is_dir()]        
-            screenshots_data = [(f[-8:-4], f) for f in s3_screenshots_obj]
-            
-        bust = int(time.time())
-        screenshots = [(index, int(tup[0]), tup[1], bust) for (index, tup) in enumerate(sorted(screenshots_data))]
+            s3_client = boto3.client('s3')
+            paginator = s3_client.get_paginator('list_objects_v2')
+            screenshots_data = []
+            for page in paginator.paginate(Bucket='websiteovertime', Prefix=f'screenshots/{domain}/'):
+                for obj in page.get('Contents', []):
+                    filename = obj['Key'].split('/')[-1]
+                    year_str = filename[-8:-4]
+                    if year_str.isdigit() and year_str != '0000':
+                        # Use LastModified as cache-buster: same file = same ?r= = browser cache hit
+                        bust = int(obj['LastModified'].timestamp())
+                        screenshots_data.append((year_str, filename, bust))
+
+        screenshots = [
+            (index, int(tup[0]), tup[1], tup[2])
+            for index, tup in enumerate(sorted(screenshots_data))
+        ]
     except Exception:
         screenshots = []
         
