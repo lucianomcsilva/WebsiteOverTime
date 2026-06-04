@@ -188,10 +188,8 @@ def api_stats():
                 status = "done"
             elif last_activity and (now - datetime.fromisoformat(last_activity)).total_seconds() < 600:
                 status = "active"
-            elif done_files:
-                status = "stalled"
             else:
-                status = "queued"
+                status = "stalled"
 
             domains_data.append({
                 "name":           domain,
