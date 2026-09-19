@@ -103,9 +103,9 @@ def index():
         # Send message to SQS queue   
         sqs_queue = sqs.get_queue_by_name(QueueName=f"{prefix}websiteovertime-geturl.fifo")     
 
-        response = sqs_queue.send_message(            
-            MessageGroupId="WebSiteOverTime",
-            #for test purpose. In the future change for URL
+        response = sqs_queue.send_message(
+            # Per-domain group so multiple domain submissions fan out in parallel.
+            MessageGroupId=domain,
             MessageDeduplicationId=f'{uuid.uuid4()}',
             MessageAttributes={
                 'Title': {
@@ -163,6 +163,8 @@ def api_stats():
     from datetime import timedelta
     daily_screenshots = defaultdict(int)   # "YYYY-MM-DD" → count
 
+    now = datetime.now(timezone.utc)   # defined once, before the loop
+
     for domain in domain_names:
         try:
             files = []
@@ -200,7 +202,6 @@ def api_stats():
             first_seen    = min(all_dates)  if all_dates  else None
             last_activity = max(done_dates) if done_dates else None
 
-            now = datetime.now(timezone.utc)
             elapsed_seconds = 0
             if first_seen:
                 elapsed_seconds = int((now - datetime.fromisoformat(first_seen)).total_seconds())
@@ -244,43 +245,79 @@ def api_stats():
         except Exception:
             pass
 
-    # ── CloudWatch logs (last N lines per Lambda) ─────────────────────────────
+    # ── CloudWatch logs — parallel instances ─────────────────────────────────
+    # With reservedConcurrency=5, up to 5 Lambda execution environments can run
+    # concurrently. Each environment writes to its own log stream. We fetch the
+    # N most recently active streams and merge them so the monitor shows all
+    # parallel instances at once.
     LAMBDA_LOG_GROUPS = {
         "getscreenshot": "/aws/lambda/wsot-sqs-get-screenshot-dev-wsotGetScreenshotFunction",
         "geturl":        "/aws/lambda/websiteovertime-geturl-dev-geturl",
     }
-    logs_client  = boto3.client("logs")
-    lambda_logs  = {}
+    ACTIVE_WINDOW_MS   = 5 * 60 * 1000   # streams with events in the last 5 min
+    MAX_STREAMS        = 5                # match reservedConcurrency
+    EVENTS_PER_STREAM  = 25
+    now_ms             = int(time.time() * 1000)
+
+    logs_client = boto3.client("logs")
+    lambda_logs = {}
+
     for fn_key, log_group in LAMBDA_LOG_GROUPS.items():
         try:
-            streams = logs_client.describe_log_streams(
+            streams_resp = logs_client.describe_log_streams(
                 logGroupName=log_group,
                 orderBy="LastEventTime",
                 descending=True,
-                limit=1,
+                limit=10,
             )
-            if not streams["logStreams"]:
-                continue
-            stream_name = streams["logStreams"][0]["logStreamName"]
-            events = logs_client.get_log_events(
-                logGroupName=log_group,
-                logStreamName=stream_name,
-                limit=30,
-                startFromHead=False,
-            )
-            lambda_logs[fn_key] = [
-                {
-                    "ts":  e["timestamp"],
-                    "msg": e["message"].rstrip("\n"),
-                }
-                for e in events["events"]
-                if e["message"].strip() and
-                   not e["message"].startswith("START ") and
-                   not e["message"].startswith("END ") and
-                   not e["message"].startswith("REPORT ")
-            ][-20:]     # keep last 20 meaningful lines
+            all_streams = streams_resp.get("logStreams", [])
+
+            # Prefer streams active in the last 5 min; fall back to the most recent
+            active = [
+                s for s in all_streams
+                if now_ms - s.get("lastEventTimestamp", 0) < ACTIVE_WINDOW_MS
+            ][:MAX_STREAMS]
+            if not active:
+                active = all_streams[:1]
+
+            merged = []
+            for idx, stream in enumerate(active):
+                # Derive a short, stable instance ID from the stream name hash
+                # e.g. "2026/06/04/[$LATEST]728df387..." → "728df387"
+                raw_id   = stream["logStreamName"].split("]")[-1].lstrip("/")
+                inst_key = raw_id[:8] if raw_id else f"{idx+1}"
+                inst_lbl = f"λ{idx+1}"   # λ1 … λ5 (display label)
+
+                events_resp = logs_client.get_log_events(
+                    logGroupName=log_group,
+                    logStreamName=stream["logStreamName"],
+                    limit=EVENTS_PER_STREAM,
+                    startFromHead=False,
+                )
+                for e in events_resp["events"]:
+                    msg = e["message"].rstrip("\n")
+                    if (not msg.strip()
+                            or msg.startswith("START ")
+                            or msg.startswith("END ")
+                            or msg.startswith("REPORT ")):
+                        continue
+                    merged.append({
+                        "ts":       e["timestamp"],
+                        "msg":      msg,
+                        "instance": inst_lbl,
+                        "inst_key": inst_key,
+                    })
+
+            # Sort chronologically; keep the tail
+            merged.sort(key=lambda x: x["ts"])
+            merged = merged[-50:]
+
+            lambda_logs[fn_key] = {
+                "events":           merged,
+                "active_instances": len(active),
+            }
         except Exception:
-            lambda_logs[fn_key] = []
+            lambda_logs[fn_key] = {"events": [], "active_instances": 0}
 
     # ── SQS queue stats ───────────────────────────────────────────────────────
     queues_data = []
@@ -370,7 +407,10 @@ def api_requeue():
             CopySource="websiteovertime/screenshots/websiteovertime-working.png"
         )
         sqs_queue.send_message(
-            MessageGroupId="WebSiteOverTime",
+            # One FIFO group per (domain, year): a broken year only blocks itself,
+            # never the rest. Shared groups cause head-of-line blocking where one
+            # un-renderable page stalls the whole queue.
+            MessageGroupId=f"{domain}-{year}",
             MessageDeduplicationId=str(uuid.uuid4()),
             MessageAttributes={
                 "Title":  {"DataType": "String", "StringValue": "Request new screenshot"},
@@ -393,9 +433,9 @@ def get_domain(domain):
         original_path = str(request.form.get('path').strip())
         domain        = str(request.form.get('domain').strip())
         year          = str(request.form.get('year').strip())
-        response = sqs_queue.send_message(            
-            MessageGroupId="WebSiteOverTime",
-            #for test purpose. In the future change for URL
+        response = sqs_queue.send_message(
+            # Per-(domain, year) FIFO group → a broken year never blocks others.
+            MessageGroupId=f"{domain}-{year}",
             MessageDeduplicationId=f'{uuid.uuid4()}',
             MessageAttributes={
                 'Title': {

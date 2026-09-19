@@ -61,16 +61,16 @@ def get_url(url):
     print(f"Domain for this request is {domain}")
     #path = create_dir(domain)
 
+    sqs_send_queue = sqs.get_queue_by_name(QueueName=f"{prefix}websiteovertime-getscreenshot.fifo")
+
     for year in range(2000, 2027):
-        #get_url_at_year(path, domain, year)      
-        #shutil.copyfile("websiteovertime-working.png", f"{path}/{domain}_{year}.png")  
         s3.Object('websiteovertime', f"screenshots/{domain}/{domain}_{year}.png").copy_from(CopySource='websiteovertime/screenshots/websiteovertime-working.png')
 
-        sqs_send_queue = sqs.get_queue_by_name(QueueName=f"{prefix}websiteovertime-getscreenshot.fifo")     
-
-        response = sqs_send_queue.send_message(            
-            MessageGroupId="WebSiteOverTime",
-            #for test purpose. In the future change for URL
+        response = sqs_send_queue.send_message(
+            # One FIFO group per (domain, year) so every year can be processed in
+            # parallel — even within a single domain — up to the Lambda's
+            # reserved concurrency. (Year order doesn't matter; they're independent.)
+            MessageGroupId=f"{domain}-{year}",
             MessageDeduplicationId=f'{uuid.uuid4()}',
             MessageAttributes={
                 'Title': {

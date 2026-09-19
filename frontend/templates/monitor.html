@@ -372,36 +372,71 @@ function renderDomains(domains) {
 
 // ── Queue cards ─────────────────────────────────────────────────────────────
 
+// Colour palette for parallel Lambda instances (terminal dark background)
+const INSTANCE_COLORS = ['#67e8f9','#fde047','#86efac','#fb923c','#f9a8d4'];
+
+// Map inst_label → color (built lazily per render, reset each loadStats call)
+let _instColorMap = {};
+function instColor(lbl) {
+  if (!_instColorMap[lbl]) {
+    const idx = Object.keys(_instColorMap).length % INSTANCE_COLORS.length;
+    _instColorMap[lbl] = INSTANCE_COLORS[idx];
+  }
+  return _instColorMap[lbl];
+}
+
 function buildLogPanel(queueName, lambdaLogs) {
-  const key = queueName.includes('getscreenshot') ? 'getscreenshot' : 'geturl';
-  const logs = lambdaLogs?.[key];
-  if (!logs || logs.length === 0) return '';
+  const key  = queueName.includes('getscreenshot') ? 'getscreenshot' : 'geturl';
+  const info = lambdaLogs?.[key];
+  if (!info) return '';
 
-  const lines = logs.map(e => {
-    const t = new Date(e.ts);
+  const events    = info.events    || [];
+  const nInst     = info.active_instances || 0;
+  if (events.length === 0) return '';
+
+  // Header badge: show how many parallel instances contributed logs
+  const instBadge = nInst > 1
+    ? `<span class="ms-2 badge" style="background:#1e3a5f;font-size:.62rem">${nInst} instâncias paralelas ⚡</span>`
+    : `<span class="ms-2 badge bg-secondary" style="font-size:.62rem">1 instância</span>`;
+
+  // Build a legend pill for each instance label seen in these events
+  const seenInst = [...new Set(events.map(e => e.instance))];
+  const legend   = seenInst.map(lbl =>
+    `<span style="color:${instColor(lbl)};font-size:.65rem;margin-left:6px">${lbl}</span>`
+  ).join('');
+
+  const lines = events.map(e => {
+    const t   = new Date(e.ts);
     const hms = t.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    const col = instColor(e.instance);
 
-    // colour-code log level
-    let cls = 'text-secondary';
+    // Log-level colour for the message text
+    let msgCls = '#9ca3af';  // default: muted grey
     const m = e.msg;
-    if (/error|exception|traceback|critical/i.test(m)) cls = 'text-danger';
-    else if (/warn/i.test(m))  cls = 'text-warning';
-    else if (/\[INFO\]|INFO/i.test(m))  cls = 'text-info';
-    else if (/saved|found|done|success|✓/i.test(m)) cls = 'text-success';
+    if (/error|exception|traceback|critical/i.test(m)) msgCls = '#f87171';  // red
+    else if (/warn/i.test(m))                          msgCls = '#fbbf24';  // amber
+    else if (/saved|file saved/i.test(m))              msgCls = '#4ade80';  // green
+    else if (/best webarchive|found at/i.test(m))      msgCls = '#34d399';  // teal
+    else if (/trying|requesting/i.test(m))             msgCls = '#93c5fd';  // blue
+    else if (/\[INFO\]/i.test(m))                      msgCls = '#d1d5db';  // light grey
 
-    // strip Lambda internal prefix [INFO] 2026-... [req-id]  etc.
+    // Strip Lambda runtime prefix: [INFO] 2026-06-04T... <req-id>
     const clean = m.replace(/^\[\w+\]\s*[\d\-T:.Z]+\s*[\w\-]+\s*/,'').trim();
-    return `<div class="${cls}" style="font-size:.68rem;white-space:pre-wrap">`
-         + `<span class="text-muted me-1">${hms}</span>${clean}</div>`;
+
+    return `<div style="font-size:.67rem;white-space:pre-wrap;line-height:1.45;display:flex;gap:4px">`
+         + `<span style="color:#4b5563;flex-shrink:0">${hms}</span>`
+         + `<span style="color:${col};flex-shrink:0;font-weight:600">${e.instance}</span>`
+         + `<span style="color:${msgCls}">${clean}</span>`
+         + `</div>`;
   }).join('');
 
   return `
     <div class="card-footer p-0">
-      <div class="d-flex align-items-center px-2 py-1 bg-dark text-white" style="font-size:.7rem">
-        <span>📋 CloudWatch — últimas execuções</span>
-        <span class="ms-auto text-muted" style="font-size:.65rem">ao vivo</span>
+      <div class="d-flex align-items-center flex-wrap px-2 py-1 bg-dark text-white" style="font-size:.7rem;gap:2px">
+        <span>📋 CloudWatch</span>${instBadge}
+        <span class="ms-auto">${legend}</span>
       </div>
-      <div class="p-2 bg-black text-monospace" style="max-height:180px;overflow-y:auto;font-family:monospace">
+      <div class="p-2 bg-black" style="max-height:220px;overflow-y:auto;font-family:monospace" id="log-${key}">
         ${lines}
       </div>
     </div>`;
@@ -427,12 +462,18 @@ function renderQueues(queues, data_lambda_logs) {
       </div>`).join('');
 
     const shortName = q.name.includes('getscreenshot') ? '📷 getscreenshot' : '🔗 geturl';
+    const fnKey     = q.name.includes('getscreenshot') ? 'getscreenshot' : 'geturl';
+    const logInfo   = data_lambda_logs?.[fnKey] || {};
+    const nInst     = logInfo.active_instances || 0;
+    const instLabel = nInst > 1
+      ? `<span class="badge ms-1" style="background:#1e3a5f;font-size:.65rem">⚡ ${nInst}× parallel</span>`
+      : (nInst === 1 ? `<span class="badge bg-secondary ms-1" style="font-size:.65rem">1 instance</span>` : '');
 
     return `
     <div class="col-md-6">
       <div class="card queue-card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <span class="fw-semibold">${shortName}.fifo</span>
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-1">
+          <span class="fw-semibold">${shortName}.fifo ${instLabel}</span>
           <span class="badge ${totalQ > 0 ? 'bg-primary' : 'bg-secondary'}">${totalQ} msgs</span>
         </div>
         <div class="card-body pb-2">
@@ -442,7 +483,7 @@ function renderQueues(queues, data_lambda_logs) {
               <div class="fs-3 fw-bold text-primary">${q.visible}</div>
             </div>
             <div class="col-6">
-              <div class="stat-label">In-flight</div>
+              <div class="stat-label">In-flight 🔄</div>
               <div class="fs-3 fw-bold text-warning">${q.in_flight}</div>
             </div>
           </div>
@@ -670,6 +711,7 @@ function startCountdown() {
 
 async function loadStats() {
   document.getElementById('countdown').textContent = '⏳';
+  _instColorMap = {};   // reset per-refresh so colours stay consistent within each render
   try {
     const res  = await fetch('/api/stats');
     const data = await res.json();

@@ -1,64 +1,70 @@
 {% extends "layout.html" %}
 {% block main %}
 <style>
-.wsot_img {
-    border:2px solid rgb(100 124 156);
-    max-width: 100%;
-    display: inline;
-}
-.col {
-    border:1px solid green;
-}
-#logo {
-    text-align:center;
-    margin-top:0em;
-    padding:10px;
-}
-input {    
-    margin: 0px 
-}
+    .wsot_img {
+        border: 2px solid rgb(100 124 156);
+        max-width: 100%;
+        display: inline;
+    }
 
-/* img:hover + div > button, button:hover { */
-img:hover + .divGetAgain, .divGetAgain:hover {
-    display: inline-block;
-}
-.divGetAgain {   
+    .col {
+        border: 1px solid green;
+    }
 
-   width: 300px;
-   position: relative;
-   width: 100%;
-   margin:0px;
-   margin-top: 10px;
-   padding: 0px;
-   clear:both;
-}
-.formGetAgain {
-    width:auto
-}
+    #logo {
+        text-align: center;
+        margin-top: 0em;
+        padding: 10px;
+    }
+
+    input {
+        margin: 0px
+    }
+
+    /* img:hover + div > button, button:hover { */
+    img:hover+.divGetAgain,
+    .divGetAgain:hover {
+        display: inline-block;
+    }
+
+    .divGetAgain {
+
+        width: 300px;
+        position: relative;
+        width: 100%;
+        margin: 0px;
+        margin-top: 10px;
+        padding: 0px;
+        clear: both;
+    }
+
+    .formGetAgain {
+        width: auto
+    }
 </style>
 <hr style="margin:1em">
 <div class="container" style="text-align: center;">
     <!-- div class='container rounded' style="border:1px solid gray" -->
     {% for (i, year, image, rand) in screenshots %}
-        {% if loop.index0 % 3 == 0 %}
-        <div class="row align-items-start">
+    {% if loop.index0 % 3 == 0 %}
+    <div class="row align-items-start">
         {% endif %}
-            <div class='col-md'>
-                <h2> {{year}} </h2>
-                <!-- <img class="rounded wsot_img" src="/screenshots/www.apple.com/www.apple.com_2000.png"> -->
-                <img class="rounded wsot_img" src="{{image}}?r={{rand}}">       
-                <div class="divGetAgain">
-                    <form  method="POST" id="formGetAgain{{year}}" class="formGetAgain">
-                        <input type="submit" id="" value="Get again this screenshot"/>
-                        <input type="hidden" name="path"   id="path"   value="screenshots{{ request.path }}">
-                        <input type="hidden" name="domain" id="domain" value="{{ request.path[1:] }}">
-                        <input type="hidden" name="year"   id="year"   value="{{year}}">
-                    </form>
-                </div>
+        <div class='col-md'>
+            <h2> {{year}} </h2>
+            <!-- <img class="rounded wsot_img" src="/screenshots/www.apple.com/www.apple.com_2000.png"> -->
+            <img class="rounded wsot_img" src="/screenshots/{{domain}}/{{image}}?r={{rand}}">
+            <div class="divGetAgain">
+                <form method="POST" id="formGetAgain{{year}}" class="formGetAgain">
+                    <input type="submit" id="" value="Get again this screenshot" />
+                    <input type="hidden" name="path" id="path" value="screenshots{{ request.path }}">
+                    <input type="hidden" name="domain" id="domain" value="{{ request.path[1:] }}">
+                    <input type="hidden" name="year" id="year" value="{{year}}">
+                </form>
             </div>
-        {% if loop.index0 % 3 == 2 or loop.last %}
         </div>
-        {% endif %}    
-    {% endfor %}                
+        {% if loop.index0 % 3 == 2 or loop.last %}
+    </div>
+    {% endif %}
+    {% endfor %}
 </div>
 {% endblock %}

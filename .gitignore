@@ -28,3 +28,8 @@ quotes.py
 ## SECURITY ##
 github.token
 aws.token
+
+# Local / regenerável
+geturl/build/
+.claude/
+*.log
